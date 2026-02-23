@@ -1,0 +1,28 @@
+{
+  "name": "zx-sketch",
+  "version": "1.0.0",
+  "description": "Browser-based ZX calculus diagram editor with interactive rewrite rules",
+  "homepage": "https://zxsketch.com",
+  "repository": "github:hstoltz/zx-sketch",
+  "author": "Harry Stoltz",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/rbush": "^4.0.0",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-pwa": "^1.2.0",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "nanoid": "^5.1.6",
+    "rbush": "^4.0.1"
+  }
+}

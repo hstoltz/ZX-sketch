@@ -1,0 +1,232 @@
+% learn-rules.tex — ZX-calculus rule diagrams for the Learn More overlay.
+% Every rule has a separate LHS and RHS page.
+% Uses the zx-calculus LaTeX package for typesetting.
+%
+% Page index (LHS=odd, RHS=even):
+%  1-2:   Spider Fusion         15-16: Local Complementation
+%  3-4:   Identity Removal      17-18: Pivoting
+%  5-6:   Bialgebra             19-20: Boundary Pivot
+%  7-8:   Hopf Rule             21-22: Gadget Pivot
+%  9-10:  Copy Rule             23-24: Phase Gadget Fusion
+%  11-12: Color Change          25-26: Supplementarity
+%  13-14: Self-Loop Removal
+%  27-28: Unfuse
+%  29-30: Pauli Push
+%  31-32: Euler Decomposition
+%  33-34: Gadgetize
+%  35-36: Wire Vertex
+\documentclass[tikz,border=6pt,multi=true]{standalone}
+\usepackage{zx-calculus}
+\usepackage{amsmath}
+\standaloneenv{ZX}
+% Phaseless spiders get [minimum size=4mm] inline to match phased spider size.
+% Package default for phaseless is 2mm, phased is 5mm at 0.8x scale ≈ 4mm.
+\begin{document}
+
+% 1. Spider Fusion — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha} \ar[r] & \zxZ{\beta} \ar[r] & \zxN{}
+\end{ZX}
+
+% 2. Spider Fusion — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha\!+\!\beta} \ar[r] & \zxN{}
+\end{ZX}
+
+% 3. Identity Removal — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \ar[r] & \zxN{}
+\end{ZX}
+
+% 4. Identity Removal — RHS
+\begin{ZX}
+  \zxN{} \ar[r,start anchor=east,end anchor=west] &[8mm] \zxN{}
+\end{ZX}
+
+% 5. Bialgebra — LHS
+\begin{ZX}
+  \zxN{} \ar[rd] & & & \zxN{} \\
+  & \zxZ[minimum size=4mm]{} \ar[r] & \zxX[minimum size=4mm]{} \ar[ru] \ar[rd] & \\
+  \zxN{} \ar[ru] & & & \zxN{}
+\end{ZX}
+
+% 6. Bialgebra — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxX[minimum size=4mm]{} \ar[r] \ar[rd] & \zxZ[minimum size=4mm]{} \ar[r] & \zxN{} \\
+  \zxN{} \ar[r] & \zxX[minimum size=4mm]{} \ar[r] \ar[ru] & \zxZ[minimum size=4mm]{} \ar[r] & \zxN{}
+\end{ZX}
+
+% 7. Hopf Rule — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \ar[r,H,bend left=30] \ar[r,H,bend right=30] &[5mm] \zxX[minimum size=4mm]{} \ar[r] & \zxN{}
+\end{ZX}
+
+% 8. Hopf Rule — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} & & \zxX[minimum size=4mm]{} \ar[r] & \zxN{}
+\end{ZX}
+
+% 9. Copy Rule — LHS
+\begin{ZX}
+  \zxN{} \ar[rd] & &[4mm] \\
+  & \zxX[minimum size=4mm]{} \ar[r,H] & \zxZ[minimum size=4mm]{} \\
+  \zxN{} \ar[ru] & &
+\end{ZX}
+
+% 10. Copy Rule — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \\
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 11. Color Change — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha} \ar[r] & \zxN{}
+\end{ZX}
+
+% 12. Color Change — RHS
+\begin{ZX}
+  \zxN{} \ar[r,H] &[4mm] \zxX{\alpha} \ar[r,H] &[4mm] \zxN{}
+\end{ZX}
+
+% 13. Self-Loop Removal — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[a]{\alpha} \ar[r] \ar[out=110,in=70,loop] & \zxN{}
+\end{ZX}
+
+% 14. Self-Loop Removal — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha} \ar[r] & \zxN{}
+\end{ZX}
+
+% 15. Local Complementation — LHS
+\begin{ZX}
+  & \zxZ[minimum size=4mm]{} \ar[d,H] & \\
+  \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ{\pm\frac{\pi}{2}} \ar[r,H] & \zxZ[minimum size=4mm]{} \\
+  & \zxZ[minimum size=4mm]{} \ar[u,H] &
+\end{ZX}
+
+% 16. Local Complementation — RHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[r,H] \ar[rd,H] & \zxZ[minimum size=4mm]{} \ar[d,H] \\
+  \zxZ[minimum size=4mm]{} \ar[u,H] \ar[r,H] & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 17. Pivoting — LHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[rd,H] & & \zxZ[minimum size=4mm]{} \\
+  & \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ[minimum size=4mm]{} \ar[u,H] \ar[d,H] \\
+  \zxZ[minimum size=4mm]{} \ar[ru,H] & & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 18. Pivoting — RHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[r,H] \ar[rd,H] & \zxZ[minimum size=4mm]{} \\
+  \zxZ[minimum size=4mm]{} \ar[r,H] \ar[ru,H] & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 19. Boundary Pivot — LHS
+\begin{ZX}
+  & & \zxZ[minimum size=4mm]{} \\
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ[minimum size=4mm]{} \ar[u,H] \ar[d,H] \\
+  & & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 20. Boundary Pivot — RHS
+\begin{ZX}
+  & \zxZ[minimum size=4mm]{} \\
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \ar[u,H] \ar[d,H] \\
+  & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 21. Gadget Pivot — LHS
+\begin{ZX}
+  & & & \zxZ[minimum size=4mm]{} \\
+  \zxZ{\alpha} \ar[r] & \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ[minimum size=4mm]{} \ar[ru,H] \ar[rd,H] & \\
+  & & & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 22. Gadget Pivot — RHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[r,H] \ar[rd,H] & \zxZ[minimum size=4mm]{} \\
+  \zxZ[minimum size=4mm]{} \ar[r,H] \ar[ru,H] & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 23. Phase Gadget Fusion — LHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[rd,H] & & \zxZ{\alpha} \\
+  & \zxZ[minimum size=4mm]{} \ar[ru] \ar[rd] & \\
+  \zxZ[minimum size=4mm]{} \ar[ru,H] & & \zxZ{\beta}
+\end{ZX}
+
+% 24. Phase Gadget Fusion — RHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[rd,H] & \\
+  & \zxZ[minimum size=4mm]{} \ar[r] & \zxZ{\alpha\!+\!\beta} \\
+  \zxZ[minimum size=4mm]{} \ar[ru,H] &
+\end{ZX}
+
+% 25. Supplementarity — LHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ{\alpha} \ar[d,H] \ar[r,H] & \zxZ[minimum size=4mm]{} \\
+  \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ{-\!\alpha} \ar[r,H] & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 26. Supplementarity — RHS
+\begin{ZX}
+  \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ[minimum size=4mm]{} \\
+  \zxZ[minimum size=4mm]{} \ar[r,H] & \zxZ[minimum size=4mm]{}
+\end{ZX}
+
+% 27. Unfuse — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha\!+\!\beta} \ar[r] & \zxN{}
+\end{ZX}
+
+% 28. Unfuse — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha} \ar[r] & \zxZ{\beta} \ar[r] & \zxN{}
+\end{ZX}
+
+% 29. Pauli Push — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha} \ar[r,H] &[4mm] \zxZ{\pi} \ar[r] & \zxN{}
+\end{ZX}
+
+% 30. Pauli Push — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{-\!\alpha} \ar[r] & \zxN{}
+\end{ZX}
+
+% 31. Euler Decomposition — LHS
+\begin{ZX}
+  \zxN{} \ar[r] &[2mm] \zxH{} \ar[r] &[2mm] \zxN{}
+\end{ZX}
+
+% 32. Euler Decomposition — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\frac{\pi}{2}} \ar[r] & \zxX{\frac{\pi}{2}} \ar[r] & \zxZ{\frac{\pi}{2}} \ar[r] & \zxN{}
+\end{ZX}
+
+% 33. Gadgetize — LHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ{\alpha} \ar[r] & \zxN{}
+\end{ZX}
+
+% 34. Gadgetize — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \ar[r] \ar[d] & \zxN{} \\
+  & \zxZ{\alpha} &
+\end{ZX}
+
+% 35. Wire Vertex — LHS
+\begin{ZX}
+  \zxN{} \ar[r,start anchor=east,end anchor=west] &[8mm] \zxN{}
+\end{ZX}
+
+% 36. Wire Vertex — RHS
+\begin{ZX}
+  \zxN{} \ar[r] & \zxZ[minimum size=4mm]{} \ar[r] & \zxN{}
+\end{ZX}
+
+\end{document}

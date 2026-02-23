@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Rounded background -->
+  <rect width="512" height="512" rx="96" fill="#f8f8f5"/>
+  <!-- Single Z spider (solid fill for rasterizer compatibility) -->
+  <circle cx="256" cy="256" r="140" fill="#4aba4a" stroke="#2e8b2e" stroke-width="8"/>
+</svg>

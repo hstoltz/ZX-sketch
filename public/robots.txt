@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zxsketch.com/sitemap.xml

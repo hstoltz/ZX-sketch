@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ZX Sketch — Free ZX Calculus Diagram Editor</title>
+    <meta name="description" content="Free browser-based ZX calculus editor. Draw ZX diagrams, apply rewrite rules interactively, and build step-by-step proofs. Powered by PyZX.">
+    <meta name="theme-color" content="#2e8b2e">
+    <meta property="og:title" content="ZX Sketch — Free ZX Calculus Diagram Editor">
+    <meta property="og:description" content="Free browser-based ZX calculus editor. Draw ZX diagrams, apply rewrite rules interactively, and build step-by-step proofs.">
+    <meta property="og:image" content="https://zxsketch.com/og-preview.png">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://zxsketch.com">
+    <meta name="google-site-verification" content="rLu4fK1w6brO3PeN6_P-9X1WcKEv2RFAncAblk7PsAw" />
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/icon.svg">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="canonical" href="https://zxsketch.com/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ZX Sketch",
+      "url": "https://zxsketch.com",
+      "description": "Free browser-based ZX calculus diagram editor. Draw ZX diagrams, apply rewrite rules, and build step-by-step proofs.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0" },
+      "browserRequirements": "Requires JavaScript. Works in Chrome, Firefox, Safari, Edge."
+    }
+    </script>
+  </head>
+  <body>
+    <div id="canvas-container" role="application" aria-label="ZX-calculus diagram editor">
+      <canvas id="scene-canvas" aria-hidden="true"></canvas>
+      <canvas id="interaction-canvas" tabindex="0"></canvas>
+    </div>
+    <!-- Logo (top left) -->
+    <div id="logo"><span class="logo-z">Z</span><span class="logo-x">X</span> Sketch</div>
+
+    <!-- Top right buttons -->
+    <div class="top-right-btns">
+      <button id="btn-learn" class="learn-btn">Learn more!</button>
+      <div class="toolbar-sep"></div>
+      <button id="btn-settings" class="settings-btn" title="Settings" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Learn overlay -->
+    <div id="learn-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Learn about ZX Calculus">
+      <div class="learn-panel">
+        <div class="learn-header">
+          <span>The ZX Calculus</span>
+          <button class="learn-close">&times;</button>
+        </div>
+        <div class="learn-content">
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings overlay -->
+    <div id="settings-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Settings">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <span>Settings</span>
+          <button class="settings-close">&times;</button>
+        </div>
+        <div class="settings-content">
+        </div>
+      </div>
+    </div>
+
+    <!-- Top toolbar -->
+    <div id="toolbar" role="toolbar" aria-label="Diagram tools">
+      <button id="btn-undo" title="Undo" aria-label="Undo" disabled>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7h8a4 4 0 0 1 0 8H7"/>
+          <path d="M6 4L3 7l3 3"/>
+        </svg>
+      </button>
+      <button id="btn-redo" title="Redo" aria-label="Redo" disabled>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 7H7a4 4 0 0 0 0 8h4"/>
+          <path d="M12 4l3 3-3 3"/>
+        </svg>
+      </button>
+      <div class="toolbar-sep" role="separator" aria-hidden="true"></div>
+      <div id="save-group">
+        <button id="btn-save" title="Download diagram" aria-label="Download diagram" aria-haspopup="menu" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 16h12"/>
+            <path d="M9 3v9"/>
+            <path d="M5 8l4 4 4-4"/>
+          </svg>
+        </button>
+        <div id="save-menu" class="hidden" role="menu">
+          <button id="save-zxg" class="export-option" role="menuitem">PyZX JSON (.zxg)</button>
+          <button id="save-proof" class="export-option hidden" role="menuitem">Proof (.zxp)</button>
+          <button id="save-qasm" class="export-option export-disabled" role="menuitem" aria-disabled="true" title="Circuit extraction requires the galois library (unavailable in browser)">QASM (circuit)</button>
+        </div>
+      </div>
+      <button id="btn-open" title="Open file (.json, .qasm, .zxproof.json)" aria-label="Open file">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 7V5a2 2 0 0 1 2-2h3l2 2h5a2 2 0 0 1 2 2v1"/>
+          <path d="M1 10a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1l-1.5 5a1 1 0 0 1-1 .5H3.5a1 1 0 0 1-1-.5L1 10z"/>
+        </svg>
+      </button>
+      <div class="toolbar-sep" role="separator" aria-hidden="true"></div>
+      <div id="mode-toggle" class="mode-toggle" role="radiogroup" aria-label="Editor mode">
+        <button class="mode-seg" data-mode="play" role="radio" aria-checked="false">Play</button>
+        <button class="mode-seg active" data-mode="proof" role="radio" aria-checked="true">Proof</button>
+      </div>
+      <div class="toolbar-sep" role="separator" aria-hidden="true"></div>
+      <div id="export-group">
+        <button id="btn-export" title="Export diagram" aria-label="Export diagram" aria-haspopup="menu" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10v4a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-4"/>
+            <path d="M9 2v9"/>
+            <path d="M5 6l4-4 4 4"/>
+          </svg>
+        </button>
+        <div id="export-menu" class="hidden" role="menu">
+          <button id="export-tikz" class="export-option" role="menuitem">TikZ (LaTeX)</button>
+          <button id="export-svg" class="export-option" role="menuitem">SVG (vector)</button>
+          <button id="export-png" class="export-option" role="menuitem">PNG (raster)</button>
+        </div>
+      </div>
+      <button id="btn-share" title="Copy shareable link" aria-label="Copy shareable link">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="13" cy="4" r="2.5"/>
+          <circle cx="5" cy="9" r="2.5"/>
+          <circle cx="13" cy="14" r="2.5"/>
+          <line x1="7.2" y1="10.1" x2="10.8" y2="12.9"/>
+          <line x1="10.8" y1="5.1" x2="7.2" y2="7.9"/>
+        </svg>
+      </button>
+      <span id="offline-badge" class="offline-badge hidden" role="status" aria-live="polite">offline</span>
+      <div class="toolbar-sep" role="separator" aria-hidden="true"></div>
+      <button id="btn-shortcuts" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="4" width="16" height="11" rx="2"/>
+          <line x1="5" y1="8" x2="5" y2="8.01"/>
+          <line x1="9" y1="8" x2="9" y2="8.01"/>
+          <line x1="13" y1="8" x2="13" y2="8.01"/>
+          <line x1="6" y1="12" x2="12" y2="12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Left palette -->
+    <div id="palette" role="toolbar" aria-label="Node palette" aria-orientation="vertical">
+      <div id="proof-setup-title" class="proof-setup-title hidden">Proof Setup</div>
+      <div class="palette-top">
+        <div class="palette-tools">
+          <button id="tool-z" class="palette-btn active" title="Z Spider (green)" aria-label="Z Spider (green)" aria-pressed="true">
+            <svg width="28" height="28" viewBox="0 0 28 28">
+              <circle cx="14" cy="14" r="10" fill="#6fcf6f" stroke="#2e8b2e" stroke-width="1.5"/>
+              <text x="14" y="18" text-anchor="middle" fill="#1a5a1a" font-size="11" font-weight="600">Z</text>
+            </svg>
+          </button>
+          <button id="tool-x" class="palette-btn" title="X Spider (red)" aria-label="X Spider (red)" aria-pressed="false">
+            <svg width="28" height="28" viewBox="0 0 28 28">
+              <circle cx="14" cy="14" r="10" fill="#f27a7a" stroke="#c42b2b" stroke-width="1.5"/>
+              <text x="14" y="18" text-anchor="middle" fill="#7a1a1a" font-size="11" font-weight="600">X</text>
+            </svg>
+          </button>
+          <button id="tool-boundary" class="palette-btn" title="Wire" aria-label="Wire" aria-pressed="false">
+            <svg width="28" height="28" viewBox="0 0 28 28">
+              <circle cx="14" cy="14" r="4" fill="#555"/>
+            </svg>
+          </button>
+          <button id="tool-hadamard" class="palette-btn" title="Hadamard Edge" aria-label="Hadamard Edge" aria-pressed="false">
+            <svg width="28" height="28" viewBox="0 0 28 28">
+              <line x1="4" y1="14" x2="24" y2="14" stroke="#444" stroke-width="2"/>
+              <rect x="9" y="9" width="10" height="10" fill="#e8b828" stroke="#b8901a" stroke-width="1.2"/>
+              <text x="14" y="18" text-anchor="middle" fill="#7a5a00" font-size="10" font-weight="600">H</text>
+            </svg>
+          </button>
+        </div>
+        <div id="goal-preview-box" class="hidden" role="button" tabindex="0" aria-label="Goal diagram">
+          <span class="goal-box-label">Goal Diagram</span>
+          <div class="goal-box-svg"></div>
+        </div>
+      </div>
+      <div id="proof-timeline" class="proof-timeline hidden"></div>
+    </div>
+
+    <!-- Rewrite rule discovery panel -->
+    <div id="rewrite-panel">
+      <button id="rw-toggle" class="rw-toggle" title="Show all rewrites">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 2L5 7l5 5"/>
+        </svg>
+      </button>
+      <div class="rw-content">
+        <div class="rw-body">
+          <div class="rw-header">Rewrites</div>
+          <div class="rw-search-bar hidden">
+            <input type="text" class="rw-search-input" placeholder="Search rewrites..." spellcheck="false" autocomplete="off"/>
+          </div>
+          <div class="rw-group" data-category="basic">
+            <div class="rw-group-label">Basic</div>
+          </div>
+          <div class="rw-group" data-category="graph_like">
+            <div class="rw-group-label">Graph-like</div>
+          </div>
+          <div class="rw-group rw-simplify-group" data-category="simplify">
+            <div class="rw-group-label">Simplify</div>
+          </div>
+          <div id="rw-status" class="rw-status">Load engine to see rewrites</div>
+        </div>
+        <div id="rw-stats" class="rw-stats"></div>
+      </div>
+    </div>
+
+    <!-- Keyboard shortcuts overlay -->
+    <div id="shortcuts-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+      <div class="shortcuts-panel">
+        <div class="shortcuts-header">
+          <span>Keyboard Shortcuts</span>
+          <button id="shortcuts-close" class="shortcuts-close">&times;</button>
+        </div>
+        <div class="shortcuts-grid">
+          <div class="shortcuts-col">
+            <div class="shortcuts-group-title">Drawing</div>
+            <div class="shortcut-row"><kbd>Double-click</kbd><span>Create node</span></div>
+            <div class="shortcut-row"><kbd>Drag rim</kbd><span>Create wire</span></div>
+            <div class="shortcut-row"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd><span>Z / X / Wire / H tool</span></div>
+            <div class="shortcuts-group-title">Selection</div>
+            <div class="shortcut-row"><kbd>Click</kbd><span>Select node/edge</span></div>
+            <div class="shortcut-row"><kbd>Shift+Click</kbd><span>Multi-select</span></div>
+            <div class="shortcut-row"><kbd>Shift+Drag</kbd><span>Box select</span></div>
+            <div class="shortcut-row"><kbd>&#8984;A</kbd><span>Select all</span></div>
+            <div class="shortcut-row"><kbd>Esc</kbd><span>Deselect all</span></div>
+          </div>
+          <div class="shortcuts-col">
+            <div class="shortcuts-group-title">Editing</div>
+            <div class="shortcut-row"><kbd>C</kbd><span>Toggle Z/X color</span></div>
+            <div class="shortcut-row"><kbd>H</kbd><span>Toggle Hadamard edge</span></div>
+            <div class="shortcut-row"><kbd>Delete</kbd><span>Delete selected</span></div>
+            <div class="shortcut-row"><kbd>&#8984;C</kbd><span>Copy</span></div>
+            <div class="shortcut-row"><kbd>&#8984;V</kbd><span>Paste</span></div>
+            <div class="shortcut-row"><kbd>&#8984;X</kbd><span>Cut</span></div>
+            <div class="shortcut-row"><kbd>&#8984;D</kbd><span>Duplicate</span></div>
+            <div class="shortcut-row"><kbd>&#8984;Z</kbd><span>Undo</span></div>
+            <div class="shortcut-row"><kbd>&#8984;&#8679;Z</kbd><span>Redo</span></div>
+            <div class="shortcuts-group-title">Navigation</div>
+            <div class="shortcut-row"><kbd>Scroll</kbd><span>Zoom</span></div>
+            <div class="shortcut-row"><kbd>Drag canvas</kbd><span>Pan</span></div>
+            <div class="shortcut-row"><kbd>?</kbd><span>This page</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal overlay (modal for viewing goal during active proof) -->
+    <div id="goal-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Goal diagram">
+      <div class="goal-overlay-panel">
+        <div class="goal-overlay-header">
+          <span>Goal Diagram</span>
+          <button class="goal-overlay-close">&times;</button>
+        </div>
+        <div class="goal-overlay-svg"></div>
+      </div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast-container" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Context menu (hidden by default) -->
+    <div id="context-menu" class="hidden" role="menu" aria-label="Node options">
+      <div id="ctx-rewrite-row">
+        <label class="ctx-rewrite-label">
+          <input id="ctx-rewrite-toggle" type="checkbox" checked />
+          <span>Apply as rewrite</span>
+        </label>
+      </div>
+      <div id="ctx-color-row">
+        <button id="ctx-color-z" class="ctx-color-btn" title="Set to Z (green)">
+          <svg width="22" height="22" viewBox="0 0 22 22">
+            <circle cx="11" cy="11" r="9" fill="#6fcf6f" stroke="#2e8b2e" stroke-width="1.5"/>
+            <text x="11" y="15" text-anchor="middle" fill="#1a5a1a" font-size="10" font-weight="600">Z</text>
+          </svg>
+        </button>
+        <button id="ctx-color-x" class="ctx-color-btn" title="Set to X (red)">
+          <svg width="22" height="22" viewBox="0 0 22 22">
+            <circle cx="11" cy="11" r="9" fill="#f27a7a" stroke="#c42b2b" stroke-width="1.5"/>
+            <text x="11" y="15" text-anchor="middle" fill="#7a1a1a" font-size="10" font-weight="600">X</text>
+          </svg>
+        </button>
+      </div>
+      <div id="ctx-phase-row">
+        <label for="ctx-phase-input">Phase</label>
+        <input id="ctx-phase-input" type="text" placeholder="e.g. pi/4" spellcheck="false" autocomplete="off"/>
+      </div>
+      <div id="ctx-phase-presets">
+        <button class="ctx-preset" data-phase="0">0</button>
+        <button class="ctx-preset" data-phase="1/4">&pi;/4</button>
+        <button class="ctx-preset" data-phase="1/2">&pi;/2</button>
+        <button class="ctx-preset" data-phase="1">&pi;</button>
+        <button class="ctx-preset" data-phase="3/2">3&pi;/2</button>
+      </div>
+      <div id="ctx-split-row" style="display:none">
+        <button id="ctx-split-btn" class="ctx-action-btn ctx-split-action">Unfuse</button>
+      </div>
+      <div class="ctx-sep"></div>
+      <div id="ctx-edge-type-row" class="hidden">
+        <button id="ctx-toggle-hadamard" class="ctx-action-btn">Toggle Hadamard</button>
+      </div>
+      <button id="ctx-delete" class="ctx-action-btn ctx-delete-btn">Delete</button>
+    </div>
+
+    <noscript>
+      <div style="max-width:640px;margin:40px auto;padding:0 20px;font-family:system-ui,sans-serif;color:#333">
+        <h1>ZX Sketch — ZX Calculus Diagram Editor</h1>
+        <p>ZX Sketch is a free, browser-based editor for creating and simplifying ZX calculus diagrams. The ZX calculus is a graphical language for quantum computing and categorical quantum mechanics.</p>
+        <h2>Features</h2>
+        <ul>
+          <li>Draw ZX diagrams with Z spiders, X spiders, and Hadamard edges</li>
+          <li>19 interactive rewrite rules including spider fusion, bialgebra, local complementation, and pivoting</li>
+          <li>Step-by-step proof mode with full undo history</li>
+          <li>18 automated simplification strategies powered by PyZX</li>
+          <li>Export to TikZ (LaTeX), SVG, PNG, and PyZX JSON</li>
+          <li>Works entirely in your browser — no installation required</li>
+        </ul>
+        <p>Please enable JavaScript to use ZX Sketch.</p>
+      </div>
+    </noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

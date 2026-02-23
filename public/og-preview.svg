@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Solid fills for social media compatibility (gradients fail in many rasterizers) -->
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#f8f8f5"/>
+
+  <!-- Edges (simple wires) -->
+  <!-- Input wires -->
+  <line x1="120" y1="115" x2="312" y2="115" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="120" y1="235" x2="312" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="120" y1="355" x2="312" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="120" y1="475" x2="312" y2="475" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <!-- Col 2 internal -->
+  <line x1="312" y1="115" x2="312" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <!-- Col 2→3 -->
+  <line x1="312" y1="115" x2="504" y2="115" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="312" y1="235" x2="504" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="312" y1="235" x2="504" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="312" y1="355" x2="504" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="312" y1="475" x2="504" y2="475" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <!-- Col 3→4 -->
+  <line x1="504" y1="115" x2="696" y2="115" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="504" y1="355" x2="696" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="504" y1="475" x2="696" y2="475" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <!-- Col 4→5 -->
+  <line x1="696" y1="115" x2="888" y2="115" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="696" y1="115" x2="888" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="696" y1="355" x2="888" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="696" y1="355" x2="888" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="696" y1="475" x2="888" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="696" y1="475" x2="888" y2="475" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <!-- Output wires -->
+  <line x1="888" y1="115" x2="1080" y2="115" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="888" y1="235" x2="1080" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="888" y1="355" x2="1080" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <line x1="888" y1="475" x2="1080" y2="475" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Hadamard edges (col 3→4 and 4→5) -->
+  <!-- 9→13 Hadamard -->
+  <line x1="504" y1="235" x2="696" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <rect x="588" y="223" width="24" height="24" fill="#e8b828" stroke="#b8901a" stroke-width="2" rx="1.5"/>
+  <!-- 13→17 Hadamard -->
+  <line x1="696" y1="235" x2="888" y2="235" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <rect x="780" y="223" width="24" height="24" fill="#e8b828" stroke="#b8901a" stroke-width="2" rx="1.5"/>
+  <!-- 13→18 Hadamard diagonal -->
+  <line x1="696" y1="235" x2="888" y2="355" stroke="#444" stroke-width="3" stroke-linecap="round"/>
+  <rect x="780" y="283" width="24" height="24" fill="#e8b828" stroke="#b8901a" stroke-width="2" rx="1.5"/>
+  <!-- 14→17 simple (already drawn above) -->
+
+  <!-- Boundary inputs -->
+  <circle cx="120" cy="115" r="7" fill="#777"/>
+  <circle cx="120" cy="235" r="7" fill="#777"/>
+  <circle cx="120" cy="355" r="7" fill="#777"/>
+  <circle cx="120" cy="475" r="7" fill="#777"/>
+  <!-- Boundary outputs -->
+  <circle cx="1080" cy="115" r="7" fill="#777"/>
+  <circle cx="1080" cy="235" r="7" fill="#777"/>
+  <circle cx="1080" cy="355" r="7" fill="#777"/>
+  <circle cx="1080" cy="475" r="7" fill="#777"/>
+
+  <!-- Col 2: Z(4), X(5), Z(6), Z(7) -->
+  <circle cx="312" cy="115" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="312" cy="235" r="22" fill="#e85555" stroke="#c42b2b" stroke-width="2.5"/>
+  <circle cx="312" cy="355" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="312" cy="475" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <!-- Col 3: Z(8), Z(9), X(10), Z(11) -->
+  <circle cx="504" cy="115" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="504" cy="235" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="504" cy="355" r="22" fill="#e85555" stroke="#c42b2b" stroke-width="2.5"/>
+  <circle cx="504" cy="475" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <!-- Col 4: Z(12), X(13), Z(14), Z(15) -->
+  <circle cx="696" cy="115" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="696" cy="235" r="22" fill="#e85555" stroke="#c42b2b" stroke-width="2.5"/>
+  <circle cx="696" cy="355" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="696" cy="475" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <!-- Col 5: X(16), X(17), Z(18), X(19) -->
+  <circle cx="888" cy="115" r="22" fill="#e85555" stroke="#c42b2b" stroke-width="2.5"/>
+  <circle cx="888" cy="235" r="22" fill="#e85555" stroke="#c42b2b" stroke-width="2.5"/>
+  <circle cx="888" cy="355" r="22" fill="#4aba4a" stroke="#2e8b2e" stroke-width="2.5"/>
+  <circle cx="888" cy="475" r="22" fill="#e85555" stroke="#c42b2b" stroke-width="2.5"/>
+</svg>

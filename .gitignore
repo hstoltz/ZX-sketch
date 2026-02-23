@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Planning & research docs (kept locally, not in repo)
+docs/
+*.pdf
+*.patch
+STATUS.md
+AUDIT-REPORT.md
+zx-sketch-design.md
+zx-sketch-build-plan.md
+v2-roadmap.md
+kissinger-ecosystem-analysis.md
+string-diagram-tool-landscape.md
+generate_*.py
+tests/fuzz_findings.md
+tests/fuzz_failures/
+tests/find_corruption.py
+tests/__pycache__/
+pyzx-pauli-push-*.py
+.env*
