@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18841742.svg)](https://doi.org/10.5281/zenodo.18841742)
+
 # ZX Sketch
 
 ZX Sketch is a web-based graphical editor for the ZX Calculus.
