@@ -9,5 +9,5 @@ function get(): WebHaptics {
 
 /** Single short tap on spider fusion. */
 export function hapticFusion(): void {
-  if (WebHaptics.isSupported) get().trigger('nudge')
+  get().trigger('nudge')
 }
