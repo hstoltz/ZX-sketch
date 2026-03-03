@@ -6,7 +6,7 @@ import { NodeType, EdgeType } from '../model/types.ts'
 import { addNode, addEdge, removeNode, removeEdge, moveNode, setNodeType, degree, fuseSpiders, edgesBetween, extractSubgraph, mergeSubgraph } from '../model/Graph.ts'
 import { phaseToString } from '../model/Phase.ts'
 import { SPIDER_RADIUS, HOPF_CUT_HALF } from './elements.ts'
-import { hapticFusion } from '../haptics.ts'
+import { hapticFusion, bindCanvas } from '../haptics.ts'
 
 
 export interface InputCallbacks {
@@ -90,6 +90,7 @@ export function setupInput(
   markDirty: () => void,
   callbacks?: InputCallbacks,
 ): { tick: (dt: number) => void; destroy: () => void } {
+  bindCanvas(canvas)
   let state: State = { type: 'idle' }
   let lastClickTime = 0
   let lastClickX = 0
