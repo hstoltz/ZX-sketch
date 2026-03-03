@@ -1325,9 +1325,9 @@ export function setupInput(
   // iOS only grants haptic user activation from click/touchend, not pointerup.
   // On drag-to-fuse, fusionTargetNode is already set by pointermove.
   function onTouchEnd() {
+    document.title = `TE: ${state.type} ft:${app.fusionTargetNode ?? 'null'}`
     if (state.type === 'dragging_node' && app.fusionTargetNode) {
       hapticTap()
-      document.title = 'HAPTIC ' + Date.now()  // DEBUG: proves touchend fired
     }
   }
 
