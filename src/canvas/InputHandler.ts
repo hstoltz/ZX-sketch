@@ -6,6 +6,7 @@ import { NodeType, EdgeType } from '../model/types.ts'
 import { addNode, addEdge, removeNode, removeEdge, moveNode, setNodeType, degree, fuseSpiders, edgesBetween, extractSubgraph, mergeSubgraph } from '../model/Graph.ts'
 import { phaseToString } from '../model/Phase.ts'
 import { SPIDER_RADIUS, HOPF_CUT_HALF } from './elements.ts'
+import { hapticFusion } from '../haptics.ts'
 
 
 export interface InputCallbacks {
@@ -704,6 +705,8 @@ export function setupInput(
 
             // Undo the move snapshot (saved at drag start)
             app.history.undo(app.graph)
+
+            hapticFusion()
 
             if (callbacks?.onProofFusion && callbacks?.isEditingLocked?.()) {
               // Proof mode: route through PyZX for verified fusion
