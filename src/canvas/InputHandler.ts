@@ -1327,6 +1327,7 @@ export function setupInput(
   function onTouchEnd() {
     if (state.type === 'dragging_node' && app.fusionTargetNode) {
       hapticTap()
+      document.title = 'HAPTIC ' + Date.now()  // DEBUG: proves touchend fired
     }
   }
 
