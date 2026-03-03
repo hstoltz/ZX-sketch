@@ -6,7 +6,7 @@ import { NodeType, EdgeType } from '../model/types.ts'
 import { addNode, addEdge, removeNode, removeEdge, moveNode, setNodeType, degree, fuseSpiders, edgesBetween, extractSubgraph, mergeSubgraph } from '../model/Graph.ts'
 import { phaseToString } from '../model/Phase.ts'
 import { SPIDER_RADIUS, HOPF_CUT_HALF } from './elements.ts'
-import { hapticFusion, bindCanvas } from '../haptics.ts'
+import { hapticTap } from '../haptics.ts'
 
 
 export interface InputCallbacks {
@@ -90,7 +90,6 @@ export function setupInput(
   markDirty: () => void,
   callbacks?: InputCallbacks,
 ): { tick: (dt: number) => void; destroy: () => void } {
-  bindCanvas(canvas)
   let state: State = { type: 'idle' }
   let lastClickTime = 0
   let lastClickX = 0
@@ -707,8 +706,6 @@ export function setupInput(
             // Undo the move snapshot (saved at drag start)
             app.history.undo(app.graph)
 
-            hapticFusion()
-
             if (callbacks?.onProofFusion && callbacks?.isEditingLocked?.()) {
               // Proof mode: route through PyZX for verified fusion
               app.selectedNodes.clear()
@@ -1324,7 +1321,17 @@ export function setupInput(
     interactionCtx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight)
   }
 
+  // --- Haptic on touchend (before pointerup) ---
+  // iOS only grants haptic user activation from click/touchend, not pointerup.
+  // On drag-to-fuse, fusionTargetNode is already set by pointermove.
+  function onTouchEnd() {
+    if (state.type === 'dragging_node' && app.fusionTargetNode) {
+      hapticTap()
+    }
+  }
+
   // --- Attach listeners ---
+  canvas.addEventListener('touchend', onTouchEnd, { passive: true })
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
   canvas.addEventListener('pointerup', onPointerUp)
@@ -1371,6 +1378,7 @@ export function setupInput(
   }
 
   function destroy() {
+    canvas.removeEventListener('touchend', onTouchEnd)
     canvas.removeEventListener('pointerdown', onPointerDown)
     canvas.removeEventListener('pointermove', onPointerMove)
     canvas.removeEventListener('pointerup', onPointerUp)
