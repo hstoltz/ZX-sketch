@@ -1,14 +1,16 @@
 // iOS haptic feedback via hidden switch checkbox toggle.
 // Toggling <input type="checkbox" switch> triggers native haptic on iOS Safari.
 // Must be offscreen (not display:none) to stay in the rendering tree.
+// Must toggle via the checkbox directly — label.click() only works from
+// click events, not pointerup (iOS doesn't grant user activation for it).
 
-let label: HTMLLabelElement | null = null
+let checkbox: HTMLInputElement | null = null
 
-function ensureDOM(): HTMLLabelElement {
-  if (label) return label
+function ensureDOM(): HTMLInputElement {
+  if (checkbox) return checkbox
 
   const id = 'zx-haptic-switch'
-  label = document.createElement('label')
+  const label = document.createElement('label')
   label.setAttribute('for', id)
   label.style.position = 'fixed'
   label.style.left = '-9999px'
@@ -18,22 +20,23 @@ function ensureDOM(): HTMLLabelElement {
   label.style.userSelect = 'none'
   label.setAttribute('aria-hidden', 'true')
 
-  const cb = document.createElement('input')
-  cb.type = 'checkbox'
-  cb.setAttribute('switch', '')
-  cb.id = id
-  cb.style.all = 'initial'
-  cb.style.appearance = 'auto'
-  cb.style.position = 'fixed'
-  cb.style.left = '-9999px'
-  cb.style.top = '-9999px'
+  checkbox = document.createElement('input')
+  checkbox.type = 'checkbox'
+  checkbox.setAttribute('switch', '')
+  checkbox.id = id
+  checkbox.style.all = 'initial'
+  checkbox.style.appearance = 'auto'
+  checkbox.style.position = 'fixed'
+  checkbox.style.left = '-9999px'
+  checkbox.style.top = '-9999px'
 
-  label.appendChild(cb)
+  label.appendChild(checkbox)
   document.body.appendChild(label)
-  return label
+  return checkbox
 }
 
 /** Single tap — triggers native iOS haptic via switch checkbox toggle. */
 export function hapticFusion(): void {
-  ensureDOM().click()
+  const cb = ensureDOM()
+  cb.checked = !cb.checked
 }
