@@ -1,6 +1,5 @@
 // SettingsOverlay.ts — Settings overlay with theme picker
 
-import { hapticTap } from '../haptics.ts'
 import type { ThemeId, CanvasTheme } from '../theme/Theme.ts'
 import { DEFAULT_THEME, DARK_THEME, CLASSIC_THEME } from '../theme/Theme.ts'
 import * as themeManager from '../theme/ThemeManager.ts'
@@ -121,11 +120,4 @@ export function buildSettingsContent(): void {
   verifyLabel.appendChild(verifyCb)
   verifyLabel.appendChild(verifyText)
   content.appendChild(verifyLabel)
-
-  const hapticBtn = document.createElement('button')
-  hapticBtn.className = 'theme-card'
-  hapticBtn.style.marginTop = '8px'
-  hapticBtn.textContent = 'Test Haptic'
-  hapticBtn.addEventListener('click', () => hapticTap())
-  content.appendChild(hapticBtn)
 }
