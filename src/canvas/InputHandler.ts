@@ -1325,11 +1325,14 @@ export function setupInput(
   // --- Haptic on touchend (before pointerup) ---
   // iOS only grants haptic user activation from click/touchend, not pointerup.
   // On drag-to-fuse, fusionTargetNode is already set by pointermove.
-  // iOS Safari fires pointerup BEFORE touchend. But only touchend grants
-  // user activation for the checkbox-switch haptic trick. So we set a flag
-  // in pointerup when fusion succeeds, and fire the haptic in touchend.
   let pendingHaptic = false
+  const _dbg = document.createElement('div')
+  _dbg.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:red;color:white;font:bold 16px sans-serif;padding:8px;text-align:center;pointer-events:none;opacity:0;transition:opacity 0.3s'
+  document.body.appendChild(_dbg)
   function onTouchEnd() {
+    _dbg.textContent = `TE pending:${pendingHaptic}`
+    _dbg.style.opacity = '1'
+    setTimeout(() => { _dbg.style.opacity = '0' }, 2000)
     if (pendingHaptic) {
       pendingHaptic = false
       hapticTap()
