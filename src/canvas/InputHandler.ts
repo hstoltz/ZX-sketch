@@ -705,7 +705,7 @@ export function setupInput(
 
             // Undo the move snapshot (saved at drag start)
             app.history.undo(app.graph)
-            pendingHaptic = true
+            hapticTap()
 
             if (callbacks?.onProofFusion && callbacks?.isEditingLocked?.()) {
               // Proof mode: route through PyZX for verified fusion
@@ -1325,16 +1325,7 @@ export function setupInput(
   // --- Haptic on touchend (before pointerup) ---
   // iOS only grants haptic user activation from click/touchend, not pointerup.
   // On drag-to-fuse, fusionTargetNode is already set by pointermove.
-  let pendingHaptic = false
-  function onDocTouchEnd() {
-    if (pendingHaptic) {
-      pendingHaptic = false
-      hapticTap()
-    }
-  }
-
   // --- Attach listeners ---
-  document.addEventListener('touchend', onDocTouchEnd, { passive: true })
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
   canvas.addEventListener('pointerup', onPointerUp)
@@ -1381,7 +1372,6 @@ export function setupInput(
   }
 
   function destroy() {
-    document.removeEventListener('touchend', onDocTouchEnd)
     canvas.removeEventListener('pointerdown', onPointerDown)
     canvas.removeEventListener('pointermove', onPointerMove)
     canvas.removeEventListener('pointerup', onPointerUp)

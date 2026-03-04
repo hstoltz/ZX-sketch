@@ -2,13 +2,15 @@
 // Toggling <input type="checkbox" switch> triggers native haptic on iOS Safari.
 // Must be offscreen (not display:none) to stay in the rendering tree.
 //
-// label.click() only triggers the native haptic from a user activation
-// context (click or touchend). For drag-to-fuse we fire from touchend.
+// The switch haptic only fires when label.click() is called from inside a
+// click handler. For drag-to-fuse (no native click event), we chain through
+// a hidden button: button.click() → click handler → label.click().
 
 let label: HTMLLabelElement | null = null
+let proxy: HTMLButtonElement | null = null
 
-function ensureDOM(): HTMLLabelElement {
-  if (label) return label
+function ensureDOM(): void {
+  if (label) return
 
   const id = 'zx-haptic-switch'
   label = document.createElement('label')
@@ -33,10 +35,22 @@ function ensureDOM(): HTMLLabelElement {
 
   label.appendChild(cb)
   document.body.appendChild(label)
-  return label
+
+  // Hidden proxy button — its click handler calls label.click(),
+  // which means label.click() always runs inside a click context.
+  proxy = document.createElement('button')
+  proxy.style.position = 'fixed'
+  proxy.style.left = '-9999px'
+  proxy.style.top = '-9999px'
+  proxy.style.opacity = '0'
+  proxy.style.pointerEvents = 'none'
+  proxy.setAttribute('aria-hidden', 'true')
+  proxy.addEventListener('click', () => { label!.click() })
+  document.body.appendChild(proxy)
 }
 
-/** Fire haptic immediately — works from click and touchend handlers. */
+/** Fire haptic tap. Can be called from any event context. */
 export function hapticTap(): void {
-  ensureDOM().click()
+  ensureDOM()
+  proxy!.click()
 }
