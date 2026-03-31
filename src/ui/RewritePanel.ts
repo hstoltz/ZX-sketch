@@ -1,4 +1,4 @@
-import { RULE_CATALOG } from '../rewrite/rules.ts'
+import { RULE_CATALOG, BPW2020_CATALOG, type RewriteRule } from '../rewrite/rules.ts'
 import type { AppState } from '../AppState.ts'
 import type { PyZXService } from '../pyodide/PyZXService.ts'
 import { toJSONWithMap } from '../model/serialize.ts'
@@ -18,7 +18,7 @@ interface FilteredMatch {
 }
 
 interface RuleButtonState {
-  rule: typeof RULE_CATALOG[number]
+  rule: RewriteRule
   btn: HTMLButtonElement
   countEl: HTMLElement
   prevBtn: HTMLButtonElement
@@ -61,12 +61,17 @@ export function setupRewritePanel(
   const statsEl = document.getElementById('rw-stats')!
   statsEl.textContent = '\u2014 nodes \u00b7 \u2014 edges'
 
+  // --- Stabilizer mode state ---
+  const STABILIZER_KEY = 'zx-sketch-stabilizer-axioms'
+  let stabilizerMode = localStorage.getItem(STABILIZER_KEY) === '1'
+
   // --- Build rule buttons ---
   const ruleStates: RuleButtonState[] = []
+  const stabilizerRuleStates: RuleButtonState[] = []
 
-  for (const rule of RULE_CATALOG) {
+  function addRuleButton(rule: RewriteRule, targetList: RuleButtonState[]) {
     const group = panelEl.querySelector(`.rw-group[data-category="${rule.category}"]`)
-    if (!group) continue
+    if (!group) return
 
     const btn = document.createElement('button')
     btn.className = 'rw-rule-btn'
@@ -112,7 +117,7 @@ export function setupRewritePanel(
       filteredMatches: [],
       currentIndex: 0,
     }
-    ruleStates.push(ruleState)
+    targetList.push(ruleState)
 
     // Hover: highlight current match on canvas
     btn.addEventListener('mouseenter', () => {
@@ -146,6 +151,36 @@ export function setupRewritePanel(
       cycleMatch(ruleState, 1)
     })
   }
+
+  // Build buttons for both catalogs
+  for (const rule of RULE_CATALOG) addRuleButton(rule, ruleStates)
+  for (const rule of BPW2020_CATALOG) addRuleButton(rule, stabilizerRuleStates)
+
+  /** Returns the active rule states based on current mode. */
+  function activeRuleStates() {
+    return stabilizerMode ? stabilizerRuleStates : ruleStates
+  }
+
+  // --- Mode switching ---
+  function applyModeVisibility() {
+    const basicGroup = panelEl.querySelector('.rw-group[data-category="basic"]') as HTMLElement | null
+    const graphLikeGroup = panelEl.querySelector('.rw-group[data-category="graph_like"]') as HTMLElement | null
+    const stabGroup = panelEl.querySelector('.rw-group[data-category="stabilizer"]') as HTMLElement | null
+    const simpGroupEl = panelEl.querySelector('.rw-group[data-category="simplify"]') as HTMLElement | null
+
+    if (stabilizerMode) {
+      if (basicGroup) basicGroup.style.display = 'none'
+      if (graphLikeGroup) graphLikeGroup.style.display = 'none'
+      if (stabGroup) stabGroup.style.display = ''
+      if (simpGroupEl) simpGroupEl.style.display = 'none'
+    } else {
+      if (basicGroup) basicGroup.style.display = ''
+      if (graphLikeGroup) graphLikeGroup.style.display = ''
+      if (stabGroup) stabGroup.style.display = 'none'
+      if (simpGroupEl) simpGroupEl.style.display = ''
+    }
+  }
+  applyModeVisibility()
 
   // --- Match cycling helpers ---
 
@@ -315,7 +350,7 @@ export function setupRewritePanel(
   function filterRules(query: string) {
     const q = query.toLowerCase().trim()
     const expanded = panelEl.classList.contains('rw-expanded')
-    for (const rs of ruleStates) {
+    for (const rs of activeRuleStates()) {
       const matchesSearch = !q || rs.rule.name.toLowerCase().includes(q)
       const visibleInMode = expanded || !rs.btn.dataset.expandOnly
       rs.btn.style.display = (matchesSearch && visibleInMode) ? '' : 'none'
@@ -413,7 +448,7 @@ export function setupRewritePanel(
     if (!partition) return
 
     // Find the unfuse button's parent group to insert after it
-    const unfuseState = ruleStates.find(rs => rs.rule.pyzxName === 'unfuse')
+    const unfuseState = activeRuleStates().find(rs => rs.rule.pyzxName === 'unfuse')
     if (!unfuseState) return
 
     partitionContainer = document.createElement('div')
@@ -841,10 +876,11 @@ export function setupRewritePanel(
     const hasSelection = selectedIntIds.size > 0 || selectedEdgePairs.size > 0
 
     statusEl.textContent = ''
+    const activeStates = activeRuleStates()
 
     try {
       // Batch: one worker message for all rules (one graph load, one round-trip)
-      const ruleNames = ruleStates.map(rs => rs.rule.pyzxName)
+      const ruleNames = activeStates.map(rs => rs.rule.pyzxName)
       const [allMatches, graphInfoResult] = await Promise.all([
         pyzx.findAllMatches(json, ruleNames),
         pyzx.graphInfo(json),
@@ -862,7 +898,7 @@ export function setupRewritePanel(
         statsEl.textContent = parts.join(' \u00b7 ')
       }
 
-      for (const rs of ruleStates) {
+      for (const rs of activeStates) {
         const matches = allMatches[rs.rule.pyzxName] ?? []
         rs.matches = matches
 
@@ -908,7 +944,7 @@ export function setupRewritePanel(
       }
     } catch (err) {
       console.warn('[RewritePanel] findAllMatches failed:', err)
-      for (const rs of ruleStates) {
+      for (const rs of activeStates) {
         rs.matches = []
         rs.filteredMatches = []
       }
@@ -922,7 +958,7 @@ export function setupRewritePanel(
     const currentJson = toJSONWithMap(app.graph, true).json
     const currentSelKey = getSelectionKey()
     if (currentJson !== lastGraphJson || currentSelKey !== lastSelectionKey) {
-      for (const s of ruleStates) {
+      for (const s of activeStates) {
         s.matches = []
         s.filteredMatches = []
         s.currentIndex = 0
@@ -936,7 +972,7 @@ export function setupRewritePanel(
     // Expose id_removal match nanoid IDs for one-click overlay on canvas
     // Use ALL matches (not selection-filtered) so X marks stay visible regardless of selection
     app.idRemovalNodes.clear()
-    for (const rs of ruleStates) {
+    for (const rs of activeStates) {
       if (rs.rule.pyzxName === 'id_removal') {
         for (const match of rs.matches) {
           const nanoids = match.map(intId => intToNanoid.get(intId)).filter((id): id is string => id !== undefined)
@@ -949,23 +985,26 @@ export function setupRewritePanel(
     }
 
     // Expose hopf-eligible edges for one-click cut overlay on canvas
+    // (not available in stabilizer mode — no Hopf rule)
     app.hopfCutEdges.clear()
-    for (const rs of ruleStates) {
-      if (rs.rule.pyzxName === 'hopf') {
-        for (const match of rs.matches) {
-          if (match.length !== 2) continue
-          const nid0 = intToNanoid.get(match[0])
-          const nid1 = intToNanoid.get(match[1])
-          if (!nid0 || !nid1) continue
-          // Find all edges between this vertex pair
-          for (const edge of app.graph.edges.values()) {
-            if ((edge.source === nid0 && edge.target === nid1) ||
-                (edge.source === nid1 && edge.target === nid0)) {
-              app.hopfCutEdges.set(edge.id, [nid0, nid1])
+    if (!stabilizerMode) {
+      for (const rs of activeStates) {
+        if (rs.rule.pyzxName === 'hopf') {
+          for (const match of rs.matches) {
+            if (match.length !== 2) continue
+            const nid0 = intToNanoid.get(match[0])
+            const nid1 = intToNanoid.get(match[1])
+            if (!nid0 || !nid1) continue
+            // Find all edges between this vertex pair
+            for (const edge of app.graph.edges.values()) {
+              if ((edge.source === nid0 && edge.target === nid1) ||
+                  (edge.source === nid1 && edge.target === nid0)) {
+                app.hopfCutEdges.set(edge.id, [nid0, nid1])
+              }
             }
           }
+          break
         }
-        break
       }
     }
 
@@ -973,7 +1012,7 @@ export function setupRewritePanel(
   }
 
   function updateButtons(hasSelection: boolean) {
-    for (const rs of ruleStates) {
+    for (const rs of activeRuleStates()) {
       const count = rs.filteredMatches.length
       const hasMatches = count > 0
 
@@ -985,7 +1024,7 @@ export function setupRewritePanel(
       updateCountDisplay(rs)
     }
 
-    if (simpGroup) {
+    if (simpGroup && !stabilizerMode) {
       for (const btn of simpGroup.querySelectorAll<HTMLButtonElement>('.rw-simp-btn')) {
         btn.disabled = false
       }
@@ -1001,6 +1040,28 @@ export function setupRewritePanel(
       statusEl.textContent = ''
     }
   }
+
+  // --- Stabilizer mode change handler ---
+  window.addEventListener('zx-stabilizer-mode-changed', () => {
+    stabilizerMode = localStorage.getItem(STABILIZER_KEY) === '1'
+    applyModeVisibility()
+    // Clear cached matches
+    lastGraphJson = ''
+    lastSelectionKey = ''
+    for (const rs of [...ruleStates, ...stabilizerRuleStates]) {
+      rs.matches = []
+      rs.filteredMatches = []
+      rs.currentIndex = 0
+      rs.btn.disabled = true
+      rs.btn.classList.remove('has-matches')
+      rs.countEl.textContent = ''
+      rs.prevBtn.style.display = 'none'
+      rs.nextBtn.style.display = 'none'
+    }
+    app.idRemovalNodes.clear()
+    app.hopfCutEdges.clear()
+    scheduleQuery()
+  })
 
   // Fire initial query
   scheduleQuery()

@@ -94,6 +94,34 @@ export function buildSettingsContent(): void {
   // Re-render when theme changes externally (e.g. OS dark mode toggle)
   themeManager.subscribe(render)
 
+  // --- Experimental section ---
+  const experimentalTitle = document.createElement('div')
+  experimentalTitle.className = 'settings-section-title'
+  experimentalTitle.style.marginTop = '18px'
+  experimentalTitle.textContent = 'Experimental'
+  content.appendChild(experimentalTitle)
+
+  const STABILIZER_STORAGE_KEY = 'zx-sketch-stabilizer-axioms'
+
+  const stabLabel = document.createElement('label')
+  stabLabel.className = 'settings-toggle-row'
+
+  const stabCb = document.createElement('input')
+  stabCb.type = 'checkbox'
+  stabCb.id = 'rw-stabilizer-cb'
+  stabCb.checked = localStorage.getItem(STABILIZER_STORAGE_KEY) === '1'
+  stabCb.addEventListener('change', () => {
+    localStorage.setItem(STABILIZER_STORAGE_KEY, stabCb.checked ? '1' : '0')
+    window.dispatchEvent(new Event('zx-stabilizer-mode-changed'))
+  })
+
+  const stabText = document.createElement('span')
+  stabText.textContent = 'Use BPW2020 stabilizer axiom set'
+
+  stabLabel.appendChild(stabCb)
+  stabLabel.appendChild(stabText)
+  content.appendChild(stabLabel)
+
   // --- Debug section ---
   const debugTitle = document.createElement('div')
   debugTitle.className = 'settings-section-title'

@@ -1546,30 +1546,8 @@ class TestPushPauliEdgeCases(unittest.TestCase):
         apply_push_pauli(g2, z_pi, x_tgt)
         self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
 
-    def test_degree_3_pauli_pyzx_fixed(self):
-        """Same degree-3 setup but using _fixed_pauli_push from worker."""
-        from tests.worker_functions import _fixed_pauli_push
-
-        g = make_graph()
-        b_in1 = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
-        b_in2 = g.add_vertex(VertexType.BOUNDARY, qubit=1, row=0)
-        z_pi = g.add_vertex(VertexType.Z, qubit=0, row=1, phase=Fraction(1))
-        x_tgt = g.add_vertex(VertexType.X, qubit=0, row=2, phase=Fraction(1, 2))
-        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=3)
-        g.add_edge((b_in1, z_pi), EdgeType.SIMPLE)
-        g.add_edge((b_in2, z_pi), EdgeType.SIMPLE)
-        g.add_edge((z_pi, x_tgt), EdgeType.SIMPLE)
-        g.add_edge((x_tgt, b_out), EdgeType.SIMPLE)
-        g.set_inputs([b_in1, b_in2])
-        g.set_outputs([b_out])
-
-        g2 = g.copy()
-        # _fixed_pauli_push(g, target, pauli) — args are reversed vs apply_push_pauli
-        _fixed_pauli_push(g2, x_tgt, z_pi)
-        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
-
-    def test_degree_3_pauli_pyzx_native_fails(self):
-        """Demonstrate that native unsafe_pauli_push CORRUPTS degree-3 Pauli."""
+    def test_degree_3_pauli_pyzx_native(self):
+        """Degree-3 Pauli push using native PyZX unsafe_pauli_push (bug fixed upstream)."""
         from pyzx.rewrite_rules.push_pauli_rule import unsafe_pauli_push
 
         g = make_graph()
@@ -1587,8 +1565,7 @@ class TestPushPauliEdgeCases(unittest.TestCase):
 
         g2 = g.copy()
         unsafe_pauli_push(g2, x_tgt, z_pi)
-        # Native PyZX FAILS here — this documents the bug
-        self.assertFalse(zx.compare_tensors(g, g2, preserve_scalar=False))
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
 
 
 class TestSelfLoopEdgeCases(unittest.TestCase):
@@ -1821,6 +1798,279 @@ class TestHopfWorkerPath(unittest.TestCase):
             'edges': [[0, 1, 2], [0, 1, 2]],
         }
         matches = json.loads(zxs_find_matches(json.dumps(graph), 'hopf'))
+        self.assertEqual(len(matches), 0)
+
+
+# ---------------------------------------------------------------------------
+# BPW2020 Stabilizer Axiom Tests
+# ---------------------------------------------------------------------------
+
+from worker_functions import (
+    _apply_euler_prime, _apply_euler_prime_rev,
+    _find_euler_prime_rev_matches,
+    _apply_b1_copy, _find_b1_copy_matches,
+    _apply_b1_uncopy, _find_b1_uncopy_matches,
+    _apply_identity_void, _apply_identity_void_rev,
+    _find_identity_void_matches,
+    _apply_zero_op, _find_zero_op_matches,
+    _apply_zero_op_rev, _find_zero_op_rev_matches,
+)
+
+
+class TestEulerPrime(unittest.TestCase):
+    """EU' — Hadamard edge → Z(π/2)-X(0)-Z(π/2) chain with Z(-π/2) leaf."""
+
+    def test_between_z_spiders(self):
+        """EU' on Hadamard edge between two Z spiders preserves tensor."""
+        g = make_graph()
+        b_in = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        z1 = g.add_vertex(VertexType.Z, qubit=0, row=1)
+        z2 = g.add_vertex(VertexType.Z, qubit=0, row=2)
+        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=3)
+        g.add_edge((b_in, z1), EdgeType.SIMPLE)
+        g.add_edge((z1, z2), EdgeType.HADAMARD)
+        g.add_edge((z2, b_out), EdgeType.SIMPLE)
+        g.set_inputs([b_in])
+        g.set_outputs([b_out])
+
+        g2 = g.copy()
+        _apply_euler_prime(g2, 1, 2)
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_between_z_and_x(self):
+        """EU' on Hadamard edge between Z and X spiders."""
+        g = make_graph()
+        b_in = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        z = g.add_vertex(VertexType.Z, qubit=0, row=1, phase=Fraction(1, 4))
+        x = g.add_vertex(VertexType.X, qubit=0, row=2, phase=Fraction(1, 2))
+        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=3)
+        g.add_edge((b_in, z), EdgeType.SIMPLE)
+        g.add_edge((z, x), EdgeType.HADAMARD)
+        g.add_edge((x, b_out), EdgeType.SIMPLE)
+        g.set_inputs([b_in])
+        g.set_outputs([b_out])
+
+        g2 = g.copy()
+        _apply_euler_prime(g2, 1, 2)
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_roundtrip(self):
+        """EU' then EU'⁻¹ returns to original tensor."""
+        g = make_graph()
+        b_in = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        z1 = g.add_vertex(VertexType.Z, qubit=0, row=1)
+        z2 = g.add_vertex(VertexType.Z, qubit=0, row=2)
+        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=3)
+        g.add_edge((b_in, z1), EdgeType.SIMPLE)
+        g.add_edge((z1, z2), EdgeType.HADAMARD)
+        g.add_edge((z2, b_out), EdgeType.SIMPLE)
+        g.set_inputs([b_in])
+        g.set_outputs([b_out])
+
+        g2 = g.copy()
+        _apply_euler_prime(g2, 1, 2)
+        # Find the reverse pattern and apply
+        matches = _find_euler_prime_rev_matches(g2)
+        self.assertTrue(len(matches) > 0, "Should find EU' reverse match")
+        _apply_euler_prime_rev(g2, matches[0])
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_2_qubit(self):
+        """EU' on a 2-qubit graph (CNOT-like with Hadamard)."""
+        g = make_graph()
+        b0 = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        b1 = g.add_vertex(VertexType.BOUNDARY, qubit=1, row=0)
+        z = g.add_vertex(VertexType.Z, qubit=0, row=1)
+        x = g.add_vertex(VertexType.X, qubit=1, row=1)
+        b2 = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=2)
+        b3 = g.add_vertex(VertexType.BOUNDARY, qubit=1, row=2)
+        g.add_edge((b0, z), EdgeType.SIMPLE)
+        g.add_edge((b1, x), EdgeType.SIMPLE)
+        g.add_edge((z, x), EdgeType.HADAMARD)
+        g.add_edge((z, b2), EdgeType.SIMPLE)
+        g.add_edge((x, b3), EdgeType.SIMPLE)
+        g.set_inputs([b0, b1])
+        g.set_outputs([b2, b3])
+
+        g2 = g.copy()
+        _apply_euler_prime(g2, 2, 3)
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+
+class TestB1Copy(unittest.TestCase):
+    """B1 — Copy rule with scalar consumption."""
+
+    def _make_b1_graph(self):
+        """Create a graph with Z(0)-X(0) structure + scalar pair + I/O."""
+        g = make_graph()
+        # Main structure: boundary → Z(0) → boundary, with X(0) leaf on Z
+        b_in = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=1, row=0)
+        z_hub = g.add_vertex(VertexType.Z, qubit=0.5, row=1)
+        x_leaf = g.add_vertex(VertexType.X, qubit=0.5, row=2)
+        g.add_edge((b_in, z_hub), EdgeType.SIMPLE)
+        g.add_edge((b_out, z_hub), EdgeType.SIMPLE)
+        g.add_edge((z_hub, x_leaf), EdgeType.SIMPLE)
+        g.set_inputs([b_in])
+        g.set_outputs([b_out])
+        # Scalar pair: Z(0)-X(0) connected by one edge
+        sc_z = g.add_vertex(VertexType.Z, qubit=3, row=0)
+        sc_x = g.add_vertex(VertexType.X, qubit=3, row=1)
+        g.add_edge((sc_z, sc_x), EdgeType.SIMPLE)
+        return g, z_hub, x_leaf, sc_z, sc_x
+
+    def test_basic_copy(self):
+        """B1 copy preserves tensor."""
+        g, z_hub, x_leaf, sc_z, sc_x = self._make_b1_graph()
+        g2 = g.copy()
+        _apply_b1_copy(g2, [z_hub, x_leaf, sc_z, sc_x])
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_matcher_finds(self):
+        """B1 matcher finds the pattern when scalar pair exists."""
+        g, z_hub, x_leaf, sc_z, sc_x = self._make_b1_graph()
+        matches = _find_b1_copy_matches(g)
+        self.assertTrue(len(matches) > 0, "Should find B1 match")
+
+    def test_no_match_without_scalar(self):
+        """B1 matcher returns empty when no scalar pair exists."""
+        g = make_graph()
+        b_in = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        z_hub = g.add_vertex(VertexType.Z, qubit=0, row=1)
+        x_leaf = g.add_vertex(VertexType.X, qubit=0, row=2)
+        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=3)
+        g.add_edge((b_in, z_hub), EdgeType.SIMPLE)
+        g.add_edge((z_hub, x_leaf), EdgeType.SIMPLE)
+        g.add_edge((z_hub, b_out), EdgeType.SIMPLE)
+        g.set_inputs([b_in])
+        g.set_outputs([b_out])
+        matches = _find_b1_copy_matches(g)
+        self.assertEqual(len(matches), 0)
+
+
+class TestB1Uncopy(unittest.TestCase):
+    """B1⁻¹ — Uncopy (reverse of B1, creates scalar pair)."""
+
+    def test_basic_uncopy(self):
+        """B1⁻¹ preserves tensor."""
+        g = make_graph()
+        b_in = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        b_out = g.add_vertex(VertexType.BOUNDARY, qubit=1, row=0)
+        x1 = g.add_vertex(VertexType.X, qubit=0, row=1)
+        x2 = g.add_vertex(VertexType.X, qubit=1, row=1)
+        g.add_edge((b_in, x1), EdgeType.SIMPLE)
+        g.add_edge((b_out, x2), EdgeType.SIMPLE)
+        g.set_inputs([b_in])
+        g.set_outputs([b_out])
+
+        g2 = g.copy()
+        _apply_b1_uncopy(g2, [x1, x2])
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_matcher_finds_pairs(self):
+        """B1⁻¹ matcher finds X(0) degree-1 pairs."""
+        g = make_graph()
+        b = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        x1 = g.add_vertex(VertexType.X, qubit=0, row=1)
+        x2 = g.add_vertex(VertexType.X, qubit=1, row=1)
+        b2 = g.add_vertex(VertexType.BOUNDARY, qubit=1, row=0)
+        g.add_edge((b, x1), EdgeType.SIMPLE)
+        g.add_edge((b2, x2), EdgeType.SIMPLE)
+        g.set_inputs([b])
+        g.set_outputs([b2])
+        matches = _find_b1_uncopy_matches(g)
+        self.assertTrue(len(matches) > 0)
+
+
+class TestIdentityVoid(unittest.TestCase):
+    """IV' — Identity Void rule."""
+
+    def _make_iv_pattern(self):
+        """Create a graph containing the IV' scalar pattern (5 vertices)."""
+        g = make_graph()
+        # Two Z-X pairs with 3 parallel edges each
+        z1 = g.add_vertex(VertexType.Z, qubit=0, row=0)
+        x1 = g.add_vertex(VertexType.X, qubit=0, row=1)
+        g.add_edge((z1, x1), EdgeType.SIMPLE)
+        g.add_edge((z1, x1), EdgeType.SIMPLE)
+        g.add_edge((z1, x1), EdgeType.SIMPLE)
+        z2 = g.add_vertex(VertexType.Z, qubit=2, row=0)
+        x2 = g.add_vertex(VertexType.X, qubit=2, row=1)
+        g.add_edge((z2, x2), EdgeType.SIMPLE)
+        g.add_edge((z2, x2), EdgeType.SIMPLE)
+        g.add_edge((z2, x2), EdgeType.SIMPLE)
+        # Phaseless Z scalar (degree 0)
+        sc = g.add_vertex(VertexType.Z, qubit=1, row=-1)
+        return g, [z1, x1, z2, x2, sc]
+
+    def test_matcher_finds_pattern(self):
+        """IV' matcher finds the 5-vertex pattern."""
+        g, match = self._make_iv_pattern()
+        matches = _find_identity_void_matches(g)
+        self.assertTrue(len(matches) > 0, "Should find IV' pattern")
+
+    def test_apply_removes_pattern(self):
+        """IV' removes the pattern, leaving nothing."""
+        g, match = self._make_iv_pattern()
+        _apply_identity_void(g, match)
+        self.assertEqual(g.num_vertices(), 0)
+
+    def test_roundtrip(self):
+        """IV'⁻¹ then IV' returns to empty (scalar equality)."""
+        g = make_graph()
+        # Start empty, create pattern, then remove it
+        _apply_identity_void_rev(g, [])
+        self.assertEqual(g.num_vertices(), 5)
+        matches = _find_identity_void_matches(g)
+        self.assertTrue(len(matches) > 0, "Should find created pattern")
+        _apply_identity_void(g, matches[0])
+        self.assertEqual(g.num_vertices(), 0)
+
+
+class TestZeroOperator(unittest.TestCase):
+    """ZO' — Zero Operator rule."""
+
+    def test_z_to_x(self):
+        """ZO' changes Z(0) deg-1 to X(0) in presence of Z(π) scalar."""
+        g = make_graph()
+        b = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        z = g.add_vertex(VertexType.Z, qubit=0, row=1)
+        g.add_edge((b, z), EdgeType.SIMPLE)
+        g.set_inputs([b])
+        # Z(pi) scalar
+        pi_sc = g.add_vertex(VertexType.Z, qubit=2, row=0, phase=Fraction(1))
+
+        g2 = g.copy()
+        matches = _find_zero_op_matches(g2)
+        self.assertTrue(len(matches) > 0, "Should find ZO' match")
+        _apply_zero_op(g2, matches[0])
+        # The diagram is zero (pi scalar = 1+e^{iπ} = 0), so tensor comparison
+        # should show both are zero maps
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_x_to_z(self):
+        """ZO'⁻¹ changes X(0) deg-1 to Z(0) in presence of Z(π) scalar."""
+        g = make_graph()
+        b = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        x = g.add_vertex(VertexType.X, qubit=0, row=1)
+        g.add_edge((b, x), EdgeType.SIMPLE)
+        g.set_inputs([b])
+        pi_sc = g.add_vertex(VertexType.Z, qubit=2, row=0, phase=Fraction(1))
+
+        g2 = g.copy()
+        matches = _find_zero_op_rev_matches(g2)
+        self.assertTrue(len(matches) > 0, "Should find ZO'⁻¹ match")
+        _apply_zero_op_rev(g2, matches[0])
+        self.assertTrue(zx.compare_tensors(g, g2, preserve_scalar=False))
+
+    def test_no_match_without_pi_scalar(self):
+        """ZO' returns no matches without Z(π) scalar."""
+        g = make_graph()
+        b = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
+        z = g.add_vertex(VertexType.Z, qubit=0, row=1)
+        g.add_edge((b, z), EdgeType.SIMPLE)
+        g.set_inputs([b])
+        matches = _find_zero_op_matches(g)
         self.assertEqual(len(matches), 0)
 
 
