@@ -1,6 +1,6 @@
 // Theme type definitions and palette objects
 
-export type ThemeId = 'default' | 'dark' | 'system' | 'classic'
+export type ThemeId = 'gloss' | 'flat' | 'dark' | 'system' | 'classic'
 
 export interface CanvasTheme {
   bgColor: string
@@ -10,6 +10,12 @@ export interface CanvasTheme {
   xInner: string
   xOuter: string
   useGradient: boolean
+  /** Enable multi-layer glass spider rendering (Gloss theme). */
+  useGloss: boolean
+  glossHighlightAlpha: number
+  glossRimAlpha: number
+  glossShadowAlpha: number
+  glossBaseAlpha: number
   spiderBorderColor: string | null // null = use outerColor
   edgeColor: string
   hadamardFill: string
@@ -41,7 +47,7 @@ export interface CssTheme {
   logoX: string
 }
 
-export const DEFAULT_THEME: CanvasTheme = {
+export const FLAT_THEME: CanvasTheme = {
   bgColor: '#f8f8f5',
   gridDotColor: 'rgba(140, 160, 200, 0.45)',
   zInner: '#6fcf6f',
@@ -49,6 +55,11 @@ export const DEFAULT_THEME: CanvasTheme = {
   xInner: '#f27a7a',
   xOuter: '#c42b2b',
   useGradient: true,
+  useGloss: false,
+  glossHighlightAlpha: 0,
+  glossRimAlpha: 0,
+  glossShadowAlpha: 0,
+  glossBaseAlpha: 1,
   spiderBorderColor: null,
   edgeColor: '#444',
   hadamardFill: '#e8b828',
@@ -72,6 +83,11 @@ export const DARK_THEME: CanvasTheme = {
   xInner: '#d45a5a',
   xOuter: '#991e1e',
   useGradient: true,
+  useGloss: false,
+  glossHighlightAlpha: 0,
+  glossRimAlpha: 0,
+  glossShadowAlpha: 0,
+  glossBaseAlpha: 1,
   spiderBorderColor: null,
   edgeColor: '#aaa',
   hadamardFill: '#e8b828',
@@ -95,6 +111,11 @@ export const CLASSIC_THEME: CanvasTheme = {
   xInner: '#ff8888',
   xOuter: '#000000',
   useGradient: false,
+  useGloss: false,
+  glossHighlightAlpha: 0,
+  glossRimAlpha: 0,
+  glossShadowAlpha: 0,
+  glossBaseAlpha: 1,
   spiderBorderColor: '#000',
   edgeColor: '#000',
   hadamardFill: '#ffff00',
@@ -110,7 +131,51 @@ export const CLASSIC_THEME: CanvasTheme = {
   confettiColors: ['#2e8b2e', '#c42b2b', '#e8a832', '#508cff', '#3cba54', '#d4534e'],
 }
 
-export const DEFAULT_CSS: CssTheme = {
+export const GLOSS_THEME: CanvasTheme = {
+  bgColor: '#f0f0ec',
+  gridDotColor: 'rgba(130, 150, 190, 0.35)',
+  zInner: '#7ee87e',
+  zOuter: '#28862e',
+  xInner: '#ff8888',
+  xOuter: '#c42b2b',
+  useGradient: true,
+  useGloss: true,
+  glossHighlightAlpha: 0.55,
+  glossRimAlpha: 0.25,
+  glossShadowAlpha: 0.12,
+  glossBaseAlpha: 0.88,
+  spiderBorderColor: null,
+  edgeColor: '#3a3a3a',
+  hadamardFill: '#f0c030',
+  hadamardStroke: '#b8901a',
+  boundaryColor: '#555',
+  phaseLabelColor: '#1a1a1a',
+  selectionGlow: 'rgba(70, 130, 255, 0.6)',
+  hoverGlow: 'rgba(70, 130, 255, 0.35)',
+  wireTargetGlow: 'rgba(70, 200, 120, 0.5)',
+  fusionGlowZ: 'rgba(70, 210, 70, 0.55)',
+  fusionGlowX: 'rgba(230, 70, 70, 0.55)',
+  rewriteMatchGlow: 'rgba(240, 170, 50, 0.5)',
+  confettiColors: ['#28862e', '#c42b2b', '#f0c030', '#508cff', '#3cba54', '#d4534e'],
+}
+
+export const GLOSS_CSS: CssTheme = {
+  uiBg: 'rgba(248, 248, 245, 0.82)',
+  uiBgSolid: '#f4f4f0',
+  uiText: '#3a3a3a',
+  uiTextMuted: '#888',
+  uiBorder: 'rgba(0, 0, 0, 0.08)',
+  uiHover: 'rgba(0, 0, 0, 0.06)',
+  uiSep: 'rgba(0, 0, 0, 0.10)',
+  panelBg: 'rgba(250, 250, 247, 0.78)',
+  overlayBg: 'rgba(0, 0, 0, 0.35)',
+  inputBg: 'rgba(255, 255, 255, 0.6)',
+  logoColor: '#333',
+  logoZ: '#28862e',
+  logoX: '#c42b2b',
+}
+
+export const FLAT_CSS: CssTheme = {
   uiBg: 'rgba(255, 255, 255, 0.88)',
   uiBgSolid: '#ffffff',
   uiText: '#444',
@@ -143,13 +208,15 @@ export const DARK_CSS: CssTheme = {
 }
 
 export const THEMES: Record<Exclude<ThemeId, 'system'>, CanvasTheme> = {
-  default: DEFAULT_THEME,
+  gloss: GLOSS_THEME,
+  flat: FLAT_THEME,
   dark: DARK_THEME,
   classic: CLASSIC_THEME,
 }
 
 export const CSS_THEMES: Record<Exclude<ThemeId, 'system'>, CssTheme> = {
-  default: DEFAULT_CSS,
+  gloss: GLOSS_CSS,
+  flat: FLAT_CSS,
   dark: DARK_CSS,
-  classic: DEFAULT_CSS,
+  classic: FLAT_CSS,
 }

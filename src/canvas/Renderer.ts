@@ -44,7 +44,7 @@ export function createRenderer(
     }
 
     // Keep redrawing while there's a selection (for pulse animation), wire creation, fusion, or animations
-    if (app.selectedNodes.size > 0 || app.selectedEdges.size > 0 || app.wireSourceNode || app.fusionTargetNode || app.animations.hasActiveAnimations || app.rewriteHighlightNodes.size > 0) {
+    if (app.selectedNodes.size > 0 || app.selectedEdges.size > 0 || app.wireSourceNode || app.fusionTargetNode || app.animations.hasActiveAnimations || app.rewriteHighlightNodes.size > 0 || app.dragNodeIds.size > 0) {
       dirty = true
     }
 
@@ -77,7 +77,7 @@ export function createRenderer(
     drawEdges(sceneCtx, app.graph, app.selectedEdges, app.hoveredEdge, app.animations, app.hoverWorld, app.proof !== null ? app.hopfCutEdges : null, app.unfusePartition)
     drawGhostEdges(sceneCtx, app.animations.ghostEdges)
     drawGhostNodes(sceneCtx, app.animations.ghosts)
-    drawNodes(sceneCtx, app.graph, app.selectedNodes, app.hoveredNode, selectionPulse, app.wireTargetNode, app.fusionTargetNode, app.animations, app.rewriteHighlightNodes, app.proof !== null ? app.idRemovalNodes : null, app.hoverWorld)
+    drawNodes(sceneCtx, app.graph, app.selectedNodes, app.hoveredNode, selectionPulse, app.wireTargetNode, app.fusionTargetNode, app.animations, app.rewriteHighlightNodes, app.proof !== null ? app.idRemovalNodes : null, app.hoverWorld, app.dragNodeIds, app.dragVelocity)
 
     // Reset globalAlpha if cross-fade was active
     if (crossFadeProgress !== null) {

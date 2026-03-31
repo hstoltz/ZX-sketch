@@ -2139,3 +2139,26 @@ html, body {
     color: #0050cc;
   }
 }
+
+/* ---- Gloss theme: brushed metal panels ---- */
+[data-theme="gloss"] #toolbar,
+[data-theme="gloss"] #rewrite-panel .rw-content,
+[data-theme="gloss"] #context-menu,
+[data-theme="gloss"] #palette,
+[data-theme="gloss"] .proof-panel,
+[data-theme="gloss"] .proof-setup-panel,
+[data-theme="gloss"] .save-dropdown {
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(0,0,0,0.015) 1px,
+      rgba(255,255,255,0.02) 2px),
+    linear-gradient(180deg,
+      rgba(255,255,255,0.92) 0%,
+      rgba(240,240,237,0.88) 100%);
+  border-color: rgba(255,255,255,0.5);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.6) inset,
+    0 -1px 0 0 rgba(0,0,0,0.04) inset,
+    0 2px 8px rgba(0,0,0,0.08);
+}

@@ -73,7 +73,7 @@ const LONG_PRESS_MOVE_THRESHOLD = 10 // px screen space
 type State =
   | { type: 'idle' }
   | { type: 'pointing_node'; nodeId: string; startX: number; startY: number; zone: 'move' | 'wire' }
-  | { type: 'dragging_node'; nodeIds: string[]; startWorldPositions: Map<string, { x: number; y: number }>; lastX: number; lastY: number }
+  | { type: 'dragging_node'; nodeIds: string[]; startWorldPositions: Map<string, { x: number; y: number }>; lastX: number; lastY: number; lastTimestamp: number }
   | { type: 'dragging_wire'; sourceNodeId: string }
   | { type: 'pointing_canvas'; startX: number; startY: number; shift: boolean }
   | { type: 'panning'; lastX: number; lastY: number }
@@ -459,7 +459,9 @@ export function setupInput(
               startWorldPositions: startPositions,
               lastX: e.clientX,
               lastY: e.clientY,
+              lastTimestamp: e.timeStamp,
             }
+            app.dragNodeIds = new Set(app.selectedNodes)
             setCursor('grabbing')
             markDirty()
           }
@@ -470,8 +472,11 @@ export function setupInput(
       case 'dragging_node': {
         const dx = (e.clientX - state.lastX) / camera.zoom
         const dy = (e.clientY - state.lastY) / camera.zoom
+        const dt = Math.max(1, e.timeStamp - state.lastTimestamp) / 1000 // seconds
+        app.dragVelocity = { vx: dx / dt, vy: dy / dt }
         state.lastX = e.clientX
         state.lastY = e.clientY
+        state.lastTimestamp = e.timeStamp
 
         // Move all selected nodes
         for (const id of state.nodeIds) {
@@ -678,6 +683,8 @@ export function setupInput(
       }
 
       case 'dragging_node': {
+        app.dragVelocity = { vx: 0, vy: 0 }
+        app.dragNodeIds.clear()
         const fusionTarget = app.fusionTargetNode
         app.fusionTargetNode = null
 
@@ -715,6 +722,7 @@ export function setupInput(
               // Normal mode: use TS fusion
               app.history.save(app.graph, 'Fuse spiders')
               fuseSpiders(app.graph, fusionTarget, draggedId)
+              app.animations.animateFusionWobble(fusionTarget)
               app.selectedNodes.clear()
               app.selectedEdges.clear()
               notifySelectionChanged()

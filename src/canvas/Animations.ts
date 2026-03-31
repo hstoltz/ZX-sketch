@@ -100,6 +100,8 @@ export interface AnimationManager {
   animateEdgeOut(ghost: GhostEdge): void
   /** Get the current animated opacity for an edge (1.0 if no animation). */
   getEdgeOpacity(edgeId: string): number
+  /** Start a fusion wobble (surviving node briefly swells then settles). */
+  animateFusionWobble(nodeId: string): void
   /** Start a whole-scene cross-fade (for large diffs). */
   startCrossFade(): void
   /** Get cross-fade progress (null if no cross-fade active). */
@@ -159,6 +161,16 @@ export function createAnimationManager(): AnimationManager {
         removeWhenDone: true,
       }
       ghosts.push(ghost)
+      manager.hasActiveAnimations = true
+    },
+
+    animateFusionWobble(nodeId: string) {
+      if (prefersReducedMotion()) return
+      nodes.set(nodeId, {
+        scale: createSpring(1.15, 1),    // swell from 1.15 then settle to 1.0
+        opacity: createSpring(1),
+        removeWhenDone: true,
+      })
       manager.hasActiveAnimations = true
     },
 

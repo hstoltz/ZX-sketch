@@ -331,7 +331,8 @@ function drawStraightEdge(
   }
 
   if (isHadamard) {
-    drawHadamardBox(ctx, mx, my)
+    const wireAngle = Math.atan2(target.y - source.y, target.x - source.x)
+    drawHadamardBox(ctx, mx, my, wireAngle)
   }
 }
 
@@ -398,7 +399,8 @@ function drawCurvedEdge(
     ctx.lineWidth = EDGE_WIDTH
     ctx.stroke()
 
-    drawHadamardBox(ctx, hmx, hmy)
+    const curveAngle = Math.atan2(target.y - source.y, target.x - source.x)
+    drawHadamardBox(ctx, hmx, hmy, curveAngle)
   } else {
     ctx.beginPath()
     ctx.moveTo(source.x, source.y)
@@ -421,7 +423,8 @@ function drawCurvedEdge(
     if (isHadamard) {
       const hmx = source.x * 0.25 + mx * 0.5 + target.x * 0.25
       const hmy = source.y * 0.25 + my * 0.5 + target.y * 0.25
-      drawHadamardBox(ctx, hmx, hmy)
+      const curveAngle = Math.atan2(target.y - source.y, target.x - source.x)
+      drawHadamardBox(ctx, hmx, hmy, curveAngle)
     }
   }
 }
@@ -472,18 +475,89 @@ function drawSelfLoop(
     // Midpoint of the cubic bezier at t=0.5
     const hmx = node.x * 0.125 + cp1x * 0.375 + cp2x * 0.375 + node.x * 0.125
     const hmy = node.y * 0.125 + cp1y * 0.375 + cp2y * 0.375 + node.y * 0.125
-    drawHadamardBox(ctx, hmx, hmy)
+    const loopAngle = Math.atan2(hmy - node.y, hmx - node.x)
+    drawHadamardBox(ctx, hmx, hmy, loopAngle)
   }
 }
 
-function drawHadamardBox(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+function drawHadamardBox(ctx: CanvasRenderingContext2D, x: number, y: number, wireAngle: number = 0): void {
   const theme = getCanvasTheme()
   const s = HADAMARD_BOX_SIZE
-  ctx.fillStyle = theme.hadamardFill
-  ctx.fillRect(x - s / 2, y - s / 2, s, s)
-  ctx.strokeStyle = theme.hadamardStroke
-  ctx.lineWidth = 1.2
-  ctx.strokeRect(x - s / 2, y - s / 2, s, s)
+  const half = s / 2
+
+  if (theme.useGloss) {
+    const savedAlpha = ctx.globalAlpha
+
+    // Rotate to align with wire direction
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(wireAngle)
+
+    const rr = 2
+    function boxPath() {
+      ctx.beginPath()
+      ctx.moveTo(-half + rr, -half)
+      ctx.lineTo(half - rr, -half)
+      ctx.quadraticCurveTo(half, -half, half, -half + rr)
+      ctx.lineTo(half, half - rr)
+      ctx.quadraticCurveTo(half, half, half - rr, half)
+      ctx.lineTo(-half + rr, half)
+      ctx.quadraticCurveTo(-half, half, -half, half - rr)
+      ctx.lineTo(-half, -half + rr)
+      ctx.quadraticCurveTo(-half, -half, -half + rr, -half)
+      ctx.closePath()
+    }
+
+    // Base gradient (slight transparency like spiders)
+    boxPath()
+    ctx.globalAlpha = savedAlpha * theme.glossBaseAlpha
+    const baseGrad = ctx.createLinearGradient(-half, -half, half, half)
+    baseGrad.addColorStop(0, '#ffe45a')
+    baseGrad.addColorStop(1, '#d4a020')
+    ctx.fillStyle = baseGrad
+    ctx.fill()
+
+    // Shadow (bottom-right darker)
+    boxPath()
+    ctx.globalAlpha = savedAlpha * theme.glossShadowAlpha
+    const shadowGrad = ctx.createRadialGradient(half * 0.3, half * 0.3, 0, 0, 0, s * 0.8)
+    shadowGrad.addColorStop(0, 'rgba(0,0,0,0)')
+    shadowGrad.addColorStop(1, 'rgba(0,0,0,1)')
+    ctx.fillStyle = shadowGrad
+    ctx.fill()
+
+    // Specular highlight (upper-left)
+    boxPath()
+    ctx.globalAlpha = savedAlpha * theme.glossHighlightAlpha
+    const hlGrad = ctx.createRadialGradient(-half * 0.3, -half * 0.3, 0, 0, 0, s * 0.7)
+    hlGrad.addColorStop(0, 'rgba(255,255,255,1)')
+    hlGrad.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = hlGrad
+    ctx.fill()
+
+    // Border
+    boxPath()
+    ctx.globalAlpha = savedAlpha
+    ctx.strokeStyle = theme.hadamardStroke
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    // Rim highlight
+    boxPath()
+    ctx.globalAlpha = savedAlpha * theme.glossRimAlpha
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
+
+    ctx.globalAlpha = savedAlpha
+    ctx.restore()
+  } else {
+    ctx.fillStyle = theme.hadamardFill
+    ctx.fillRect(x - half, y - half, s, s)
+    ctx.strokeStyle = theme.hadamardStroke
+    ctx.lineWidth = 1.2
+    ctx.strokeRect(x - half, y - half, s, s)
+  }
 }
 
 // --- Node rendering ---
@@ -500,7 +574,48 @@ export function drawNodes(
   rewriteHighlightNodes: Set<string> | null = null,
   idRemovalNodes: Set<string> | null = null,
   hoverWorld: { x: number; y: number } | null = null,
+  dragNodeIds: Set<string> | null = null,
+  dragVelocity: { vx: number; vy: number } | null = null,
 ): void {
+  const theme = getCanvasTheme()
+
+  // Fusion merge rendering
+  const fusionMergeIds = new Set<string>()
+  // Store bulge data for pre-contact phase
+  let fusionBulgeData: { draggedId: string; targetId: string; dist: number; theta: number } | null = null
+  if (fusionTargetNode && dragNodeIds && dragNodeIds.size === 1) {
+    const draggedId = dragNodeIds.values().next().value as string | undefined
+    const draggedNode = draggedId ? graph.nodes.get(draggedId) : undefined
+    const targetNode = graph.nodes.get(fusionTargetNode)
+    if (draggedNode && targetNode && draggedNode.type === targetNode.type && draggedNode.type !== NodeType.Boundary) {
+      const fdx = targetNode.x - draggedNode.x
+      const fdy = targetNode.y - draggedNode.y
+      const fdist = Math.sqrt(fdx * fdx + fdy * fdy)
+      const ftheta = Math.atan2(fdy, fdx)
+      const touchDist = SPIDER_RADIUS * 2 // distance where circles just touch
+      const fusionRange = SPIDER_RADIUS * 2.5 // full detection range
+      const isZ = draggedNode.type === NodeType.Z
+
+      if (fdist <= touchDist) {
+        // Circles are overlapping → metaball merged blob
+        // overlap goes from 0 (just touching) to 1 (fully overlapped)
+        const overlap = Math.max(0, 1 - fdist / touchDist)
+        fusionMergeIds.add(draggedNode.id)
+        fusionMergeIds.add(targetNode.id)
+        const v = 0.15 + overlap * 0.5
+        drawMetaballFusion(
+          ctx, draggedNode.x, draggedNode.y, targetNode.x, targetNode.y,
+          SPIDER_RADIUS, v,
+          isZ ? theme.zInner : theme.xInner, isZ ? theme.zOuter : theme.xOuter,
+          theme,
+        )
+      } else if (fdist < fusionRange) {
+        // Pre-contact: store data for localized bulge toward partner
+        fusionBulgeData = { draggedId: draggedNode.id, targetId: targetNode.id, dist: fdist, theta: ftheta }
+      }
+    }
+  }
+
   for (const node of graph.nodes.values()) {
     const isSelected = selectedNodes.has(node.id)
     const isHovered = hoveredNode === node.id
@@ -526,6 +641,28 @@ export function drawNodes(
       ctx.translate(-node.x, -node.y)
     }
 
+    // Squash-and-stretch deformation for dragged nodes (Gloss theme)
+    const isDragged = dragNodeIds?.has(node.id) ?? false
+    if (isDragged && theme.useGloss && dragVelocity) {
+      const speed = Math.sqrt(dragVelocity.vx ** 2 + dragVelocity.vy ** 2)
+      const stretch = Math.min(1.18, 1 + speed * 0.0003)
+      if (stretch > 1.001) {
+        const squash = 1 / Math.sqrt(stretch)
+        const angle = Math.atan2(dragVelocity.vy, dragVelocity.vx)
+        ctx.translate(node.x, node.y)
+        ctx.rotate(angle)
+        ctx.scale(stretch, squash)
+        ctx.rotate(-angle)
+        ctx.translate(-node.x, -node.y)
+      }
+    }
+
+    // Skip individual rendering for spiders being merged — the metaball handles them
+    if (fusionMergeIds.has(node.id)) {
+      ctx.restore()
+      continue
+    }
+
     // Check if cursor is over the tiny X hitbox at spider center
     let isOverXHitbox = false
     if (isIdRemoval && isHovered && hoverWorld) {
@@ -538,10 +675,53 @@ export function drawNodes(
       drawBoundaryNode(ctx, node, isSelected, isHovered, selectionPulse, isWireTarget, isRewriteHighlighted)
     } else {
       drawSpider(ctx, node, isSelected, isHovered, selectionPulse, isWireTarget, isFusionTarget, isRewriteHighlighted, isIdRemoval, isOverXHitbox)
+
+      // Localized bulge lobe: a small protrusion on the near side toward fusion partner
+      if (fusionBulgeData && (node.id === fusionBulgeData.draggedId || node.id === fusionBulgeData.targetId)) {
+        const r = SPIDER_RADIUS
+        const touchDist = r * 2
+        const fusionRange = r * 2.5
+        // bulgeT: 0 at fusionRange, 1 at touchDist
+        const bulgeT = Math.max(0, (fusionRange - fusionBulgeData.dist) / (fusionRange - touchDist))
+        const bulgeLen = r * 0.3 * bulgeT // max 30% of radius protrusion
+        // Angle toward partner
+        const toPartner = node.id === fusionBulgeData.draggedId
+          ? fusionBulgeData.theta
+          : fusionBulgeData.theta + Math.PI
+        // Draw a teardrop-shaped lobe on the facing side
+        const tipX = node.x + (r + bulgeLen) * Math.cos(toPartner)
+        const tipY = node.y + (r + bulgeLen) * Math.sin(toPartner)
+        const spreadAngle = 0.5 // how wide the base of the lobe is on the circle
+        const baseL_x = node.x + r * Math.cos(toPartner + spreadAngle)
+        const baseL_y = node.y + r * Math.sin(toPartner + spreadAngle)
+        const baseR_x = node.x + r * Math.cos(toPartner - spreadAngle)
+        const baseR_y = node.y + r * Math.sin(toPartner - spreadAngle)
+
+        ctx.beginPath()
+        ctx.moveTo(baseL_x, baseL_y)
+        ctx.quadraticCurveTo(tipX, tipY, baseR_x, baseR_y)
+        // Close along the circle arc
+        ctx.arc(node.x, node.y, r, toPartner - spreadAngle, toPartner + spreadAngle, false)
+        ctx.closePath()
+
+        const isZ = node.type === NodeType.Z
+        const innerColor = isZ ? theme.zInner : theme.xInner
+        const outerColor = isZ ? theme.zOuter : theme.xOuter
+        ctx.fillStyle = outerColor
+        ctx.fill()
+        if (theme.useGloss) {
+          ctx.save()
+          ctx.globalAlpha = ctx.globalAlpha * theme.glossBaseAlpha
+          ctx.fillStyle = innerColor
+          ctx.fill()
+          ctx.restore()
+        }
+      }
     }
 
     ctx.restore()
   }
+
 }
 
 /** Draw ghost nodes (deleted nodes still animating out). */
@@ -579,6 +759,282 @@ export function drawGhostNodes(
   }
 }
 
+// --- Glossy glass spider rendering (Gloss theme) ---
+
+import type { CanvasTheme } from '../theme/Theme.ts'
+
+/** Cached gradient sets per color pair (only 2: Z and X). */
+const glossGradientCache = new Map<string, {
+  base: CanvasGradient
+  shadow: CanvasGradient
+  highlight: CanvasGradient
+  pinpoint: CanvasGradient
+}>()
+
+/** Clear gradient cache (call on theme change). */
+export function clearGlossCache(): void {
+  glossGradientCache.clear()
+}
+
+function getOrCreateGlossGradients(
+  ctx: CanvasRenderingContext2D,
+  innerColor: string,
+  outerColor: string,
+  r: number,
+): ReturnType<typeof glossGradientCache.get> & {} {
+  const key = `${innerColor}:${outerColor}`
+  let cached = glossGradientCache.get(key)
+  if (cached) return cached
+
+  // All gradients centered at origin — use ctx.translate(x, y) before drawing
+  const base = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.05, 0, 0, r)
+  base.addColorStop(0, innerColor)
+  base.addColorStop(0.7, outerColor)
+  base.addColorStop(1, outerColor)
+
+  const shadow = ctx.createRadialGradient(r * 0.15, r * 0.25, r * 0.3, 0, 0, r)
+  shadow.addColorStop(0, 'rgba(0,0,0,0)')
+  shadow.addColorStop(1, 'rgba(0,0,0,1)')
+
+  const highlight = ctx.createRadialGradient(-r * 0.35, -r * 0.35, 0, 0, 0, r * 0.6)
+  highlight.addColorStop(0, 'rgba(255,255,255,1)')
+  highlight.addColorStop(1, 'rgba(255,255,255,0)')
+
+  const pinpoint = ctx.createRadialGradient(-r * 0.25, -r * 0.3, 0, -r * 0.25, -r * 0.3, r * 0.2)
+  pinpoint.addColorStop(0, 'rgba(255,255,255,1)')
+  pinpoint.addColorStop(0.5, 'rgba(255,255,255,0.3)')
+  pinpoint.addColorStop(1, 'rgba(255,255,255,0)')
+
+  cached = { base, shadow, highlight, pinpoint }
+  glossGradientCache.set(key, cached)
+  return cached
+}
+
+function drawGlossySpiderBody(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  innerColor: string,
+  outerColor: string,
+  theme: CanvasTheme,
+): void {
+  const grads = getOrCreateGlossGradients(ctx, innerColor, outerColor, r)
+  const savedAlpha = ctx.globalAlpha
+
+  ctx.save()
+  ctx.translate(x, y)
+
+  // Layer 1: Base body (colored glass)
+  ctx.globalAlpha = savedAlpha * theme.glossBaseAlpha
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = grads.base
+  ctx.fill()
+
+  // Layer 2: Bottom shadow (ambient occlusion)
+  ctx.globalAlpha = savedAlpha * theme.glossShadowAlpha
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = grads.shadow
+  ctx.fill()
+
+  // Layer 3: Primary specular highlight
+  ctx.globalAlpha = savedAlpha * theme.glossHighlightAlpha
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = grads.highlight
+  ctx.fill()
+
+  // Layer 4: Pinpoint highlight (tiny glass glint)
+  ctx.globalAlpha = savedAlpha * 0.7
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.fillStyle = grads.pinpoint
+  ctx.fill()
+
+  // Layer 5: Rim light (Fresnel edge glow)
+  ctx.globalAlpha = savedAlpha * theme.glossRimAlpha
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)'
+  ctx.lineWidth = 1.2
+  ctx.stroke()
+
+  // Border
+  ctx.globalAlpha = savedAlpha
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.strokeStyle = theme.spiderBorderColor ?? outerColor
+  ctx.lineWidth = 1.2
+  ctx.stroke()
+
+  ctx.restore()
+  ctx.globalAlpha = savedAlpha
+}
+
+/**
+ * Draw organic metaball fusion between two same-color spiders.
+ * Uses the Hiroyuki Sato / Varun Vachhar algorithm: compute tangent contact points
+ * on each circle, connect with cubic bezier curves whose handles are tangent to the
+ * circles. The result is one smooth continuous blob shape.
+ *
+ * @param v Connection tightness: 0 = no connection, 0.5 = full organic merge
+ */
+function drawMetaballFusion(
+  ctx: CanvasRenderingContext2D,
+  ax: number, ay: number,
+  bx: number, by: number,
+  r: number,
+  v: number,
+  innerColor: string,
+  outerColor: string,
+  theme: CanvasTheme,
+): void {
+  if (v <= 0.01) return
+
+  const dx = bx - ax, dy = by - ay
+  const d = Math.sqrt(dx * dx + dy * dy)
+  if (d < 0.01) return
+
+  const theta = Math.atan2(dy, dx)
+  const HALF_PI = Math.PI / 2
+
+  // For equal radii: u = acos(d / (2r)) when overlapping, 0 otherwise
+  const u = d < 2 * r ? Math.acos(Math.min(1, d / (2 * r))) : 0
+
+  // Spread angle: how wide the connection grips each circle
+  // maxSpread = PI/2 for equal radii
+  const spread = u + (HALF_PI - u) * v
+
+  // Four contact points where the connector meets each circle
+  const p1x = ax + r * Math.cos(theta + spread)
+  const p1y = ay + r * Math.sin(theta + spread)
+  const p2x = ax + r * Math.cos(theta - spread)
+  const p2y = ay + r * Math.sin(theta - spread)
+  const p3x = bx + r * Math.cos(theta + Math.PI - spread)
+  const p3y = by + r * Math.sin(theta + Math.PI - spread)
+  const p4x = bx + r * Math.cos(theta + Math.PI + spread)
+  const p4y = by + r * Math.sin(theta + Math.PI + spread)
+
+  // Handle length: proportional to distance between contact points, capped
+  const connDist = Math.sqrt((p1x - p3x) ** 2 + (p1y - p3y) ** 2)
+  const d2 = Math.min(v * 2.4, connDist / (2 * r)) * Math.min(1, d / r)
+  const hLen = r * d2
+
+  // Handles — tangent to circle at each contact point
+  const h1x = p1x + hLen * Math.cos(theta + spread - HALF_PI)
+  const h1y = p1y + hLen * Math.sin(theta + spread - HALF_PI)
+  const h2x = p2x + hLen * Math.cos(theta - spread + HALF_PI)
+  const h2y = p2y + hLen * Math.sin(theta - spread + HALF_PI)
+  const h3x = p3x + hLen * Math.cos(theta + Math.PI - spread + HALF_PI)
+  const h3y = p3y + hLen * Math.sin(theta + Math.PI - spread + HALF_PI)
+  const h4x = p4x + hLen * Math.cos(theta + Math.PI + spread - HALF_PI)
+  const h4y = p4y + hLen * Math.sin(theta + Math.PI + spread - HALF_PI)
+
+  // Helper: trace the metaball outline path (no fill/stroke)
+  function tracePath() {
+    ctx.beginPath()
+    ctx.moveTo(p1x, p1y)
+    ctx.bezierCurveTo(h1x, h1y, h3x, h3y, p3x, p3y)
+    ctx.arc(bx, by, r, theta + Math.PI - spread, theta + Math.PI + spread, true)
+    ctx.bezierCurveTo(h4x, h4y, h2x, h2y, p2x, p2y)
+    ctx.arc(ax, ay, r, theta - spread, theta + spread, true)
+    ctx.closePath()
+  }
+
+  const savedAlpha = ctx.globalAlpha
+  const cx = (ax + bx) / 2, cy = (ay + by) / 2
+  const blobR = d / 2 + r
+
+  if (theme.useGloss) {
+    // Layer 1: Unified base fill (one gradient across the whole blob — no overlap darkening)
+    tracePath()
+    ctx.globalAlpha = savedAlpha * theme.glossBaseAlpha
+    const baseGrad = ctx.createRadialGradient(
+      cx - blobR * 0.15, cy - blobR * 0.15, blobR * 0.05,
+      cx, cy, blobR,
+    )
+    baseGrad.addColorStop(0, innerColor)
+    baseGrad.addColorStop(0.75, outerColor)
+    baseGrad.addColorStop(1, outerColor)
+    ctx.fillStyle = baseGrad
+    ctx.fill()
+
+    // Layer 2: Ambient shadow (single, from lower-right)
+    tracePath()
+    ctx.globalAlpha = savedAlpha * theme.glossShadowAlpha
+    const shadowGrad = ctx.createRadialGradient(
+      cx + blobR * 0.1, cy + blobR * 0.15, blobR * 0.2,
+      cx, cy, blobR,
+    )
+    shadowGrad.addColorStop(0, 'rgba(0,0,0,0)')
+    shadowGrad.addColorStop(1, 'rgba(0,0,0,1)')
+    ctx.fillStyle = shadowGrad
+    ctx.fill()
+
+    // Layer 3: Per-sphere specular highlights (white/additive — overlapping is fine)
+    // Clip to the metaball shape so highlights don't bleed outside
+    ctx.save()
+    tracePath()
+    ctx.clip()
+    for (const [sx, sy] of [[ax, ay], [bx, by]]) {
+      ctx.globalAlpha = savedAlpha * theme.glossHighlightAlpha
+      const hl = ctx.createRadialGradient(sx - r * 0.35, sy - r * 0.35, 0, sx, sy, r * 0.6)
+      hl.addColorStop(0, 'rgba(255,255,255,1)')
+      hl.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.beginPath()
+      ctx.arc(sx, sy, r, 0, Math.PI * 2)
+      ctx.fillStyle = hl
+      ctx.fill()
+
+      // Pinpoint glint
+      ctx.globalAlpha = savedAlpha * 0.7
+      const pp = ctx.createRadialGradient(sx - r * 0.25, sy - r * 0.3, 0, sx - r * 0.25, sy - r * 0.3, r * 0.2)
+      pp.addColorStop(0, 'rgba(255,255,255,1)')
+      pp.addColorStop(0.5, 'rgba(255,255,255,0.3)')
+      pp.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.beginPath()
+      ctx.arc(sx, sy, r, 0, Math.PI * 2)
+      ctx.fillStyle = pp
+      ctx.fill()
+    }
+    ctx.restore()
+
+    // Rim light
+    tracePath()
+    ctx.globalAlpha = savedAlpha * theme.glossRimAlpha
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)'
+    ctx.lineWidth = 1.2
+    ctx.stroke()
+
+    // Border
+    tracePath()
+    ctx.globalAlpha = savedAlpha
+    ctx.strokeStyle = theme.spiderBorderColor ?? outerColor
+    ctx.lineWidth = 1.2
+    ctx.stroke()
+  } else {
+    // Non-gloss: single fill
+    tracePath()
+    if (theme.useGradient) {
+      const grad = ctx.createRadialGradient(cx - blobR * 0.2, cy - blobR * 0.2, blobR * 0.05, cx, cy, blobR)
+      grad.addColorStop(0, innerColor)
+      grad.addColorStop(1, outerColor)
+      ctx.fillStyle = grad
+    } else {
+      ctx.fillStyle = innerColor
+    }
+    ctx.fill()
+    tracePath()
+    ctx.strokeStyle = theme.spiderBorderColor ?? outerColor
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+  }
+
+  ctx.globalAlpha = savedAlpha
+}
+
 function drawSpider(
   ctx: CanvasRenderingContext2D,
   node: Node,
@@ -597,8 +1053,8 @@ function drawSpider(
   const outerColor = isZ ? theme.zOuter : theme.xOuter
   const innerColor = isZ ? theme.zInner : theme.xInner
 
-  // Fusion target glow (magnetic pull indicator — bright, pulsing)
-  if (isFusionTarget) {
+  // Fusion target glow (magnetic pull indicator — skip in Gloss theme, metaball handles it)
+  if (isFusionTarget && !theme.useGloss) {
     const fusionColor = isZ ? theme.fusionGlowZ : theme.fusionGlowX
     ctx.beginPath()
     ctx.arc(node.x, node.y, r + 10, 0, Math.PI * 2)
@@ -636,28 +1092,29 @@ function drawSpider(
     ctx.fill()
   }
 
-  ctx.beginPath()
-  ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
-
-  if (theme.useGradient) {
-    // Radial gradient: lighter center, darker edge — gives dimensionality
-    const grad = ctx.createRadialGradient(
-      node.x - r * 0.3, node.y - r * 0.3, r * 0.1,
-      node.x, node.y, r,
-    )
-    grad.addColorStop(0, innerColor)
-    grad.addColorStop(1, outerColor)
-    ctx.fillStyle = grad
+  if (theme.useGloss) {
+    drawGlossySpiderBody(ctx, node.x, node.y, r, innerColor, outerColor, theme)
   } else {
-    // Flat fill (classic style)
-    ctx.fillStyle = innerColor
-  }
-  ctx.fill()
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
 
-  // Border
-  ctx.strokeStyle = theme.spiderBorderColor ?? outerColor
-  ctx.lineWidth = theme.useGradient ? 1.5 : 2
-  ctx.stroke()
+    if (theme.useGradient) {
+      const grad = ctx.createRadialGradient(
+        node.x - r * 0.3, node.y - r * 0.3, r * 0.1,
+        node.x, node.y, r,
+      )
+      grad.addColorStop(0, innerColor)
+      grad.addColorStop(1, outerColor)
+      ctx.fillStyle = grad
+    } else {
+      ctx.fillStyle = innerColor
+    }
+    ctx.fill()
+
+    ctx.strokeStyle = theme.spiderBorderColor ?? outerColor
+    ctx.lineWidth = theme.useGradient ? 1.5 : 2
+    ctx.stroke()
+  }
 
   // Phase label
   const label = phaseToString(node.phase)
@@ -764,7 +1221,8 @@ export function drawGhostEdges(
     if (ghost.type === EdgeType.Hadamard) {
       const mx = (ghost.source.x + ghost.target.x) / 2
       const my = (ghost.source.y + ghost.target.y) / 2
-      drawHadamardBox(ctx, mx, my)
+      const ghostAngle = Math.atan2(ghost.target.y - ghost.source.y, ghost.target.x - ghost.source.x)
+      drawHadamardBox(ctx, mx, my, ghostAngle)
     }
 
     ctx.restore()

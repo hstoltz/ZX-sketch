@@ -1,18 +1,18 @@
 // ThemeManager — runtime theme state management
 
 import type { ThemeId, CanvasTheme, CssTheme } from './Theme.ts'
-import { THEMES, CSS_THEMES, DEFAULT_THEME } from './Theme.ts'
+import { THEMES, CSS_THEMES, GLOSS_THEME } from './Theme.ts'
 
 const STORAGE_KEY = 'zx-sketch-theme'
 
 type ThemeSubscriber = () => void
 
-let currentThemeId: ThemeId = 'default'
-let resolvedCanvas: CanvasTheme = DEFAULT_THEME
+let currentThemeId: ThemeId = 'gloss'
+let resolvedCanvas: CanvasTheme = GLOSS_THEME
 const subscribers: Set<ThemeSubscriber> = new Set()
 
-function resolveSystemTheme(): 'default' | 'dark' {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default'
+function resolveSystemTheme(): 'gloss' | 'dark' {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'gloss'
 }
 
 function resolveTheme(id: ThemeId): { canvas: CanvasTheme; css: CssTheme; dataTheme: string } {
@@ -50,9 +50,13 @@ function applyTheme(id: ThemeId): void {
 }
 
 export function init(): void {
-  const stored = localStorage.getItem(STORAGE_KEY) as ThemeId | null
-  if (stored && (stored === 'default' || stored === 'dark' || stored === 'system' || stored === 'classic')) {
-    currentThemeId = stored
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored === 'default') {
+    // Migrate old 'default' → 'gloss' (Gloss is the new default)
+    currentThemeId = 'gloss'
+    localStorage.setItem(STORAGE_KEY, 'gloss')
+  } else if (stored && (stored === 'gloss' || stored === 'flat' || stored === 'dark' || stored === 'system' || stored === 'classic')) {
+    currentThemeId = stored as ThemeId
   }
   applyTheme(currentThemeId)
 

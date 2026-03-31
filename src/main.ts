@@ -203,7 +203,8 @@ const renderer = createRenderer(
 )
 
 // --- Theme → re-render ---
-themeManager.subscribe(() => renderer.markDirty())
+import { clearGlossCache } from './canvas/elements.ts'
+themeManager.subscribe(() => { clearGlossCache(); renderer.markDirty() })
 
 // --- Autosave ---
 const autosave = setupAutosave(app)

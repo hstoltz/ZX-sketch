@@ -68,6 +68,10 @@ export interface AppState {
   idRemovalNodes: Set<string>
   /** Edge IDs eligible for one-click Hopf cut in proof mode. Maps edge nanoid → [v1, v2] nanoids. */
   hopfCutEdges: Map<string, [string, string]>
+  /** Drag velocity for squash-and-stretch deformation (world px/sec). */
+  dragVelocity: { vx: number; vy: number }
+  /** IDs of nodes currently being dragged (for deformation rendering). */
+  dragNodeIds: Set<string>
   /** Non-null when unfuse wire partition mode is active. */
   unfusePartition: UnfusePartition | null
   /** Non-null when proof mode is active. */
@@ -97,6 +101,8 @@ export function createAppState(): AppState {
     rewriteHighlightEdges: new Set(),
     idRemovalNodes: new Set(),
     hopfCutEdges: new Map(),
+    dragVelocity: { vx: 0, vy: 0 },
+    dragNodeIds: new Set(),
     unfusePartition: null,
     proof: null,
     proofViewingPast: false,
