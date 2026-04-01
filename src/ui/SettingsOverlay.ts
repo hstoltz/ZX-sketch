@@ -15,9 +15,9 @@ function getThemeOptions(): ThemeOption[] {
   const systemResolved = themeManager.getResolvedId()
   return [
     { id: 'gloss', name: 'Gloss', subtitle: 'Glass orbs & brushed metal', palette: GLOSS_THEME },
+    { id: 'dark', name: 'Gloss Dark', subtitle: 'Glass orbs, dark background', palette: DARK_THEME },
+    { id: 'system', name: 'System', subtitle: 'Gloss light/dark (follows OS theme)', palette: systemResolved === 'dark' ? DARK_THEME : GLOSS_THEME },
     { id: 'flat', name: 'Flat', subtitle: 'The original ZX Sketch look', palette: FLAT_THEME },
-    { id: 'dark', name: 'Dark', subtitle: 'Join the dark side', palette: DARK_THEME },
-    { id: 'system', name: 'System', subtitle: 'A tasteful choice (follows OS theme)', palette: systemResolved === 'dark' ? DARK_THEME : GLOSS_THEME },
     { id: 'classic', name: 'Classic', subtitle: 'Close to PyZX/ZXLive. The classic!', palette: CLASSIC_THEME },
   ]
 }

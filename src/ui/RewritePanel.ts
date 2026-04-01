@@ -364,6 +364,10 @@ export function setupRewritePanel(
       }
     }
     for (const group of panelEl.querySelectorAll('.rw-group')) {
+      const cat = (group as HTMLElement).dataset.category
+      // Never show stabilizer group unless stabilizer mode is on, and vice versa
+      if (cat === 'stabilizer' && !stabilizerMode) { (group as HTMLElement).style.display = 'none'; continue }
+      if (cat !== 'stabilizer' && cat !== 'simplify' && stabilizerMode) { (group as HTMLElement).style.display = 'none'; continue }
       const visible = group.querySelectorAll('.rw-rule-btn:not([style*="display: none"]), .rw-simp-btn:not([style*="display: none"])').length
       ;(group as HTMLElement).style.display = visible === 0 ? 'none' : ''
     }
