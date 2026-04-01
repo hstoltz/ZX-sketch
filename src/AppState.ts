@@ -80,6 +80,8 @@ export interface AppState {
   proofViewingPast: boolean
   /** True during proof setup phase (panel visible, editing unlocked, proof not yet started). */
   proofSetup: boolean
+  /** True while space key is held — reveals rewrite overlays (id removal X, Hopf cut lines). */
+  spaceHeld: boolean
 }
 
 export function createAppState(): AppState {
@@ -107,5 +109,6 @@ export function createAppState(): AppState {
     proof: null,
     proofViewingPast: false,
     proofSetup: false,
+    spaceHeld: false,
   }
 }

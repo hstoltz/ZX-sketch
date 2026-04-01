@@ -16,6 +16,9 @@ export interface CanvasTheme {
   glossRimAlpha: number
   glossShadowAlpha: number
   glossBaseAlpha: number
+  /** Background gradient (null = flat bgColor fill). */
+  bgGradientInner: string | null
+  bgGradientOuter: string | null
   spiderBorderColor: string | null // null = use outerColor
   edgeColor: string
   hadamardFill: string
@@ -60,6 +63,8 @@ export const FLAT_THEME: CanvasTheme = {
   glossRimAlpha: 0,
   glossShadowAlpha: 0,
   glossBaseAlpha: 1,
+  bgGradientInner: null,
+  bgGradientOuter: null,
   spiderBorderColor: null,
   edgeColor: '#444',
   hadamardFill: '#e8b828',
@@ -83,11 +88,13 @@ export const DARK_THEME: CanvasTheme = {
   xInner: '#d45a5a',
   xOuter: '#991e1e',
   useGradient: true,
-  useGloss: false,
-  glossHighlightAlpha: 0,
-  glossRimAlpha: 0,
-  glossShadowAlpha: 0,
-  glossBaseAlpha: 1,
+  useGloss: true,
+  glossHighlightAlpha: 0.4,
+  glossRimAlpha: 0.3,
+  glossShadowAlpha: 0.08,
+  glossBaseAlpha: 0.88,
+  bgGradientInner: '#252528',
+  bgGradientOuter: '#1a1a1e',
   spiderBorderColor: null,
   edgeColor: '#aaa',
   hadamardFill: '#e8b828',
@@ -116,6 +123,8 @@ export const CLASSIC_THEME: CanvasTheme = {
   glossRimAlpha: 0,
   glossShadowAlpha: 0,
   glossBaseAlpha: 1,
+  bgGradientInner: null,
+  bgGradientOuter: null,
   spiderBorderColor: '#000',
   edgeColor: '#000',
   hadamardFill: '#ffff00',
@@ -144,6 +153,8 @@ export const GLOSS_THEME: CanvasTheme = {
   glossRimAlpha: 0.25,
   glossShadowAlpha: 0.12,
   glossBaseAlpha: 0.88,
+  bgGradientInner: '#f5f5f2',
+  bgGradientOuter: '#e8e8e4',
   spiderBorderColor: null,
   edgeColor: '#3a3a3a',
   hadamardFill: '#f0c030',

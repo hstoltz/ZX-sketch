@@ -1083,12 +1083,26 @@ function drawSpider(
     const glowAlpha = 0.35 + 0.2 * selectionPulse
     ctx.beginPath()
     ctx.arc(node.x, node.y, r + 6, 0, Math.PI * 2)
-    ctx.fillStyle = `rgba(80, 140, 255, ${glowAlpha})`
+    if (theme.useGloss) {
+      const selGrad = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, r + 6)
+      selGrad.addColorStop(0, `rgba(80, 140, 255, ${glowAlpha})`)
+      selGrad.addColorStop(1, `rgba(80, 140, 255, 0)`)
+      ctx.fillStyle = selGrad
+    } else {
+      ctx.fillStyle = `rgba(80, 140, 255, ${glowAlpha})`
+    }
     ctx.fill()
   } else if (isHovered && !isWireTarget && !isFusionTarget) {
     ctx.beginPath()
     ctx.arc(node.x, node.y, r + 4, 0, Math.PI * 2)
-    ctx.fillStyle = theme.hoverGlow
+    if (theme.useGloss) {
+      const hovGrad = ctx.createRadialGradient(node.x, node.y, r * 0.5, node.x, node.y, r + 4)
+      hovGrad.addColorStop(0, 'rgba(80, 140, 255, 0.35)')
+      hovGrad.addColorStop(1, 'rgba(80, 140, 255, 0)')
+      ctx.fillStyle = hovGrad
+    } else {
+      ctx.fillStyle = theme.hoverGlow
+    }
     ctx.fill()
   }
 
@@ -1194,8 +1208,40 @@ function drawBoundaryNode(
 
   ctx.beginPath()
   ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
-  ctx.fillStyle = theme.boundaryColor
-  ctx.fill()
+
+  if (theme.useGloss) {
+    const savedAlpha = ctx.globalAlpha
+    // Base fill with slight transparency
+    ctx.globalAlpha = savedAlpha * theme.glossBaseAlpha
+    const grad = ctx.createRadialGradient(
+      node.x - r * 0.3, node.y - r * 0.3, r * 0.05,
+      node.x, node.y, r,
+    )
+    grad.addColorStop(0, '#888')
+    grad.addColorStop(1, '#444')
+    ctx.fillStyle = grad
+    ctx.fill()
+    // Specular dot
+    ctx.globalAlpha = savedAlpha * 0.5
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
+    const hl = ctx.createRadialGradient(node.x - r * 0.3, node.y - r * 0.3, 0, node.x, node.y, r * 0.6)
+    hl.addColorStop(0, 'rgba(255,255,255,1)')
+    hl.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = hl
+    ctx.fill()
+    // Rim light
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, r, 0, Math.PI * 2)
+    ctx.globalAlpha = savedAlpha * theme.glossRimAlpha
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)'
+    ctx.lineWidth = 0.8
+    ctx.stroke()
+    ctx.globalAlpha = savedAlpha
+  } else {
+    ctx.fillStyle = theme.boundaryColor
+    ctx.fill()
+  }
 }
 
 /** Draw ghost edges (removed edges still fading out). */

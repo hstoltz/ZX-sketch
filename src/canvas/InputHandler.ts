@@ -222,9 +222,9 @@ export function setupInput(
     const world = screenToWorld(camera, e.clientX, e.clientY)
     const hit = hitTest(app.graph, world.x, world.y, camera.zoom, touchPadding(e))
 
-    // One-click Hopf cut in proof mode — check ALL cut lines regardless of what was hit
-    if (callbacks?.isEditingLocked?.()) {
-      const hopfCutEdges = callbacks.getHopfCutEdges?.()
+    // One-click Hopf cut — check ALL cut lines regardless of what was hit
+    if (callbacks?.isEditingLocked?.() || app.spaceHeld) {
+      const hopfCutEdges = callbacks?.getHopfCutEdges?.()
       if (hopfCutEdges && hopfCutEdges.size > 0) {
         // Deduplicate by vertex pair
         const checkedPairs = new Set<string>()
@@ -247,7 +247,7 @@ export function setupInput(
           const projCut = Math.abs(offx * px + offy * py)
           const projEdge = Math.abs(offx * edx / elen + offy * edy / elen)
           if (projCut <= HOPF_CUT_HALF + 6 && projEdge <= 10) {
-            callbacks.onHopfCut?.(match[0], match[1])
+            callbacks?.onHopfCut?.(match[0], match[1])
             state = { type: 'idle' }
             return
           }
@@ -377,8 +377,8 @@ export function setupInput(
         }
         // Always update hover world position for partial edge highlighting, id-removal hitbox, and Hopf cut lines
         let needsHoverWorld = !!(newHoveredEdge || (newHoveredNode && callbacks?.getIdRemovalNodes?.().has(newHoveredNode)))
-        if (!needsHoverWorld && callbacks?.isEditingLocked?.()) {
-          const hopfCutEdges = callbacks.getHopfCutEdges?.()
+        if (!needsHoverWorld && (callbacks?.isEditingLocked?.() || app.spaceHeld)) {
+          const hopfCutEdges = callbacks?.getHopfCutEdges?.()
           if (hopfCutEdges && hopfCutEdges.size > 0) {
             const checkedPairs = new Set<string>()
             for (const [, match] of hopfCutEdges) {
@@ -636,8 +636,8 @@ export function setupInput(
       case 'pointing_node': {
         const now = performance.now()
 
-        // One-click identity removal in proof mode — tiny hitbox at spider center
-        if (callbacks?.isEditingLocked?.() && callbacks?.getIdRemovalNodes?.().has(state.nodeId)) {
+        // One-click identity removal — tiny hitbox at spider center
+        if ((callbacks?.isEditingLocked?.() || app.spaceHeld) && callbacks?.getIdRemovalNodes?.().has(state.nodeId)) {
           const node = app.graph.nodes.get(state.nodeId)
           if (node) {
             const clickWorld = screenToWorld(camera, state.startX, state.startY)
@@ -1127,6 +1127,34 @@ export function setupInput(
     if (e.key === '?') {
       callbacks?.toggleShortcutsOverlay?.()
     }
+
+    // Space: reveal rewrite overlays while held
+    if (e.key === ' ' && !e.repeat) {
+      // Don't intercept if editing locked (proof mode already shows overlays)
+      // or if a text input is focused
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+      if (callbacks?.isEditingLocked?.()) return
+      e.preventDefault()
+      app.spaceHeld = true
+      markDirty()
+    }
+  }
+
+  function onKeyUp(e: KeyboardEvent) {
+    if (e.key === ' ') {
+      if (app.spaceHeld) {
+        app.spaceHeld = false
+        markDirty()
+      }
+    }
+  }
+
+  function onWindowBlur() {
+    if (app.spaceHeld) {
+      app.spaceHeld = false
+      markDirty()
+    }
   }
 
   // --- Wheel (zoom) ---
@@ -1356,6 +1384,8 @@ export function setupInput(
   canvas.addEventListener('wheel', onWheel, { passive: false })
   canvas.addEventListener('contextmenu', onContextMenu)
   window.addEventListener('keydown', onKeyDown)
+  window.addEventListener('keyup', onKeyUp)
+  window.addEventListener('blur', onWindowBlur)
 
   /** Called each frame. Applies pan momentum. */
   function tick(dt: number) {
@@ -1381,6 +1411,8 @@ export function setupInput(
     canvas.removeEventListener('wheel', onWheel)
     canvas.removeEventListener('contextmenu', onContextMenu)
     window.removeEventListener('keydown', onKeyDown)
+    window.removeEventListener('keyup', onKeyUp)
+    window.removeEventListener('blur', onWindowBlur)
   }
 
   return { tick, destroy }

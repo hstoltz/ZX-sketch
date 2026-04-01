@@ -57,7 +57,18 @@ export function createRenderer(
 
     // --- Scene layer: grid + edges + nodes ---
     sceneCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
-    sceneCtx.fillStyle = getCanvasTheme().bgColor
+    const _theme = getCanvasTheme()
+    if (_theme.bgGradientInner && _theme.bgGradientOuter) {
+      const bgGrad = sceneCtx.createRadialGradient(
+        width * 0.5, height * 0.45, 0,
+        width * 0.5, height * 0.5, Math.max(width, height) * 0.7,
+      )
+      bgGrad.addColorStop(0, _theme.bgGradientInner)
+      bgGrad.addColorStop(1, _theme.bgGradientOuter)
+      sceneCtx.fillStyle = bgGrad
+    } else {
+      sceneCtx.fillStyle = _theme.bgColor
+    }
     sceneCtx.fillRect(0, 0, width, height)
 
     applyCameraTransform(sceneCtx, camera, dpr)
@@ -74,10 +85,11 @@ export function createRenderer(
     const selectionPulse = (Math.sin(elapsedTime * Math.PI * 2) + 1) / 2
 
     // Draw edges first (underneath), then ghost edges, then ghost nodes, then nodes on top
-    drawEdges(sceneCtx, app.graph, app.selectedEdges, app.hoveredEdge, app.animations, app.hoverWorld, app.proof !== null ? app.hopfCutEdges : null, app.unfusePartition)
+    const showRewriteOverlays = app.proof !== null || app.spaceHeld
+    drawEdges(sceneCtx, app.graph, app.selectedEdges, app.hoveredEdge, app.animations, app.hoverWorld, showRewriteOverlays ? app.hopfCutEdges : null, app.unfusePartition)
     drawGhostEdges(sceneCtx, app.animations.ghostEdges)
     drawGhostNodes(sceneCtx, app.animations.ghosts)
-    drawNodes(sceneCtx, app.graph, app.selectedNodes, app.hoveredNode, selectionPulse, app.wireTargetNode, app.fusionTargetNode, app.animations, app.rewriteHighlightNodes, app.proof !== null ? app.idRemovalNodes : null, app.hoverWorld, app.dragNodeIds, app.dragVelocity)
+    drawNodes(sceneCtx, app.graph, app.selectedNodes, app.hoveredNode, selectionPulse, app.wireTargetNode, app.fusionTargetNode, app.animations, app.rewriteHighlightNodes, showRewriteOverlays ? app.idRemovalNodes : null, app.hoverWorld, app.dragNodeIds, app.dragVelocity)
 
     // Reset globalAlpha if cross-fade was active
     if (crossFadeProgress !== null) {

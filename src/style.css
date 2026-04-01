@@ -2142,17 +2142,13 @@ html, body {
 
 /* ---- Gloss theme: brushed metal panels ---- */
 [data-theme="gloss"] #toolbar,
-[data-theme="gloss"] #rewrite-panel .rw-content,
+[data-theme="gloss"] #rewrite-panel,
 [data-theme="gloss"] #context-menu,
 [data-theme="gloss"] #palette,
 [data-theme="gloss"] .proof-panel,
 [data-theme="gloss"] .proof-setup-panel,
 [data-theme="gloss"] .save-dropdown {
   background:
-    repeating-linear-gradient(0deg,
-      rgba(255,255,255,0.03) 0px,
-      rgba(0,0,0,0.015) 1px,
-      rgba(255,255,255,0.02) 2px),
     linear-gradient(180deg,
       rgba(255,255,255,0.92) 0%,
       rgba(240,240,237,0.88) 100%);
@@ -2161,4 +2157,179 @@ html, body {
     0 1px 0 0 rgba(255,255,255,0.6) inset,
     0 -1px 0 0 rgba(0,0,0,0.04) inset,
     0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ---- Dark theme: dark brushed metal panels ---- */
+[data-theme="dark"] #toolbar,
+[data-theme="dark"] #rewrite-panel,
+[data-theme="dark"] #context-menu,
+[data-theme="dark"] #palette,
+[data-theme="dark"] .proof-panel,
+[data-theme="dark"] .proof-setup-panel,
+[data-theme="dark"] .save-dropdown {
+  background:
+    linear-gradient(180deg,
+      rgba(45,45,50,0.92) 0%,
+      rgba(30,30,35,0.88) 100%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.08) inset,
+    0 -1px 0 0 rgba(0,0,0,0.15) inset,
+    0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* ---- Dark theme: proof setup inner elements ---- */
+[data-theme="dark"] #goal-preview-box {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] #goal-preview-box:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(80, 140, 255, 0.25);
+}
+[data-theme="dark"] #goal-preview-box.has-preview {
+  background: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] #goal-preview-box .goal-box-label {
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-setup-title {
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-setup-subtitle {
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-setup-tab {
+  color: var(--ui-text-muted);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .proof-setup-tab:hover {
+  background: rgba(80, 140, 255, 0.08);
+  border-color: rgba(80, 140, 255, 0.25);
+}
+[data-theme="dark"] .proof-setup-tab .tab-dot {
+  background: rgba(255, 255, 255, 0.25);
+}
+[data-theme="dark"] .proof-set-goal-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-set-goal-btn:hover {
+  background: rgba(80, 140, 255, 0.08);
+  border-color: rgba(80, 140, 255, 0.3);
+  color: #508cff;
+}
+[data-theme="dark"] #palette.proof-setup .palette-tools {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .proof-sidebar-goal-preview {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .proof-sidebar-goal-preview:hover {
+  border-color: rgba(80, 140, 255, 0.3);
+  background: rgba(80, 140, 255, 0.06);
+}
+[data-theme="dark"] .proof-actions {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .proof-save-btn,
+[data-theme="dark"] .proof-export-btn {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-save-btn:hover,
+[data-theme="dark"] .proof-export-btn:hover {
+  background: rgba(80, 140, 255, 0.1);
+}
+
+/* ---- Dark theme: proof timeline inner elements ---- */
+[data-theme="dark"] .proof-header span {
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-restart-btn {
+  color: rgba(255, 255, 255, 0.5);
+}
+[data-theme="dark"] .proof-restart-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ui-text);
+}
+[data-theme="dark"] .proof-exit-btn {
+  color: rgba(255, 255, 255, 0.5);
+}
+[data-theme="dark"] .proof-exit-btn:hover {
+  background: rgba(196, 43, 43, 0.15);
+  color: #e86060;
+}
+[data-theme="dark"] .proof-step {
+  color: var(--ui-text);
+}
+[data-theme="dark"] .proof-dot {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: #2d2d32;
+}
+[data-theme="dark"] .proof-steps::before {
+  background: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .proof-step-subtitle {
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] .proof-goal-gap::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.1) 0px,
+    rgba(255, 255, 255, 0.1) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+/* ---- Dark theme: rewrite panel inner elements ---- */
+[data-theme="dark"] .rw-header {
+  color: var(--ui-text-muted);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .rw-toggle {
+  border-right-color: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+}
+[data-theme="dark"] .rw-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ui-text);
+}
+[data-theme="dark"] .rw-group-label {
+  color: var(--ui-text-muted);
+}
+[data-theme="dark"] #rewrite-panel.rw-expanded .rw-group + .rw-group {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .rw-rule-btn {
+  color: var(--ui-text);
+}
+[data-theme="dark"] .rw-rule-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .rw-rule-btn:disabled {
+  color: rgba(255, 255, 255, 0.25);
+}
+[data-theme="dark"] .rw-rule-btn.has-matches {
+  color: #fff;
+}
+[data-theme="dark"] .rw-nav-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+[data-theme="dark"] .rw-nav-btn:hover {
+  color: var(--ui-text);
+}
+[data-theme="dark"] .rw-stats {
+  color: var(--ui-text-muted);
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .rw-status {
+  color: var(--ui-text-muted);
+}
+
+/* ---- Dark theme: palette buttons ---- */
+[data-theme="dark"] .palette-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }

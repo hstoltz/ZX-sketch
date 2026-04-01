@@ -314,7 +314,7 @@ class TestRoundTripPushPauli(unittest.TestCase):
 
         Z(pi) has 3 edges (2 boundary inputs + 1 to target), triggering
         the degree > 2 branch in unsafe_pauli_push where the phase-zeroing
-        bug occurs. Our _fixed_pauli_push workaround must preserve the tensor.
+        bug occurred. Fixed upstream in PyZX (PR #406).
         """
         g = make_graph()
         bi1 = g.add_vertex(VertexType.BOUNDARY, qubit=0, row=0)
